@@ -1,0 +1,27 @@
+version: '3'
+services:
+  nycunext:
+    container_name: nycunext
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3000:3000"
+
+  # Redis
+  nycuredis:
+    container_name: nycuredis
+    image: redis:latest
+    restart: unless-stopped
+    tty: true
+    # Port forwarding could be removed in production
+    # Would still be able to connect between containers, but not from host.
+    ports: 
+      - "6379:6379"
+    volumes:
+      - "nycuredis-cache:/data"
+      - "${PWD}/redis.conf:/usr/local/etc/redis/redis.conf"
+volumes:
+  nycuredis-cache:
