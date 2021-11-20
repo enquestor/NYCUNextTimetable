@@ -35,7 +35,7 @@ export default ({ children }: any) => {
 
   return (
     <ThemeProvider theme={themeOptions}>
-      <Box sx={{ display: "flex", flexDirection: "column" }}>
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <CssBaseline />
         <AppBar position="sticky" elevation={0}>
           <Toolbar>
