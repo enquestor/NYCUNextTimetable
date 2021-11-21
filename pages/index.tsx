@@ -42,14 +42,14 @@ type SearchCategory =
   | "courseId"
   | "coursePermanentId"
   | "teacherName"
-  | "department";
+  | "departmentName";
 
 const searchCategories: { category: SearchCategory; name: string }[] = [
   { category: "courseName", name: "Course Name" },
   { category: "courseId", name: "Course ID" },
   { category: "coursePermanentId", name: "Permanent ID" },
   { category: "teacherName", name: "Teacher Name" },
-  { category: "department", name: "Department" },
+  { category: "departmentName", name: "Department" },
 ];
 
 const Home: NextPage<HomeProps> = ({ acysems }) => {
