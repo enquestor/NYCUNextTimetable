@@ -1,6 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Course } from "../../models/course";
-import { cacheCourses, cachedPost } from "../../utils/redis";
+import {
+  cacheCourses,
+  cachedPost,
+  getCachedDepartments,
+} from "../../utils/redis";
 import { parseCourses } from "../../models/course";
 import { encode } from "querystring";
 import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
@@ -9,6 +13,7 @@ export type CoursesApiParameters = {
   acysem: string;
   category: string;
   query: string;
+  language?: string;
   force?: boolean;
 };
 
@@ -30,11 +35,13 @@ export default async function handler(
   const acysem = params.acysem;
   const category = params.category;
   const query = params.query;
+  const language = params.language ?? "zh-tw";
   const force = params.force ?? false;
   if (
     typeof acysem !== "string" ||
     typeof category !== "string" ||
-    typeof query !== "string"
+    typeof query !== "string" ||
+    (language !== "zh-tw" && language !== "en-us")
   ) {
     res.status(400).end();
     return;
@@ -48,7 +55,7 @@ export default async function handler(
   // format query parameters
   let nycuParameter = query;
   if (nycuOption === "dep") {
-    // TODO: change query departmentName to departmentId
+    nycuParameter = await toDepartmentId(query, language);
   }
 
   // get courses from nycu
@@ -90,6 +97,21 @@ type CachedNycuCoursesApiReponse = {
   data?: NycuCoursesApiReponse | null;
   time: string;
 };
+
+async function toDepartmentId(
+  departmentName: string,
+  language: string
+): Promise<string> {
+  const departments = await getCachedDepartments(language);
+  const target = departments.find((department) =>
+    department.name.includes(departmentName)
+  );
+  if (typeof target === "undefined") {
+    return "";
+  } else {
+    return target.id;
+  }
+}
 
 async function nycuCoursesApi(
   acysem: string,

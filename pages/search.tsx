@@ -85,10 +85,4 @@ const Loading = ({ isVeryLong }: LoadingProps) => {
   );
 };
 
-const useCourses = (
-  acysem: string,
-  category: SearchCategory,
-  query: string
-) => {};
-
 export default Search;

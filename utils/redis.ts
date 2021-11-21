@@ -128,14 +128,18 @@ export const cacheCourses = async (courses: Course[]) => {
 };
 
 export const cacheDepartments = async (
-  departments: Department[],
+  departmentsZh: Department[],
   departmentsEn: Department[]
 ) => {
-  await client.set("departments", JSON.stringify(departments));
-  let departmentNames = {
-    "zh-tw": departments.map((department) => department.name),
+  const departments = {
+    "zh-tw": departmentsZh,
+    "en-us": departmentsEn,
+  };
+  const departmentNames = {
+    "zh-tw": departmentsZh.map((department) => department.name),
     "en-us": departmentsEn.map((department) => department.name),
   };
+  await client.set("departments", JSON.stringify(departments));
   await client.set("departmentNames", JSON.stringify(departmentNames));
 };
 
@@ -159,13 +163,16 @@ export const getCachedTeacherNames = async (): Promise<string[]> => {
   return teacherNames;
 };
 
-export const getCachedDepartments = async (): Promise<Department[] | null> => {
+export const getCachedDepartments = async (
+  language: string
+): Promise<Department[]> => {
   const rawDepartments = await client.get("departments");
   if (rawDepartments === null) {
-    return null;
+    return [];
   }
-  const departments: Department[] = JSON.parse(rawDepartments);
-  return departments;
+  const departments: { [key: string]: Department[] } =
+    JSON.parse(rawDepartments);
+  return departments[language];
 };
 
 export const getCachedDepartmentNames = async (
