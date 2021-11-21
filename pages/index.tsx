@@ -85,6 +85,13 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
           query={query}
           onChange={(newQuery) => setQuery(newQuery)}
           onSearch={() => handleSearch()}
+          onNextCategory={() => {
+            const categoryIndex = searchCategories.findIndex(
+              (searchCategory) => searchCategory.category === category
+            );
+            const newCategory = (categoryIndex + 1) % searchCategories.length;
+            setCategory(searchCategories[newCategory].category);
+          }}
         />
         <Box height="20px" />
         <Stack
@@ -135,15 +142,29 @@ type SearchBarProps = {
   query: string;
   onChange: (query: string) => void;
   onSearch: () => void;
+  onNextCategory: () => void;
 };
 
-const SearchBar = ({ category, query, onChange, onSearch }: SearchBarProps) => {
+const SearchBar = ({
+  category,
+  query,
+  onChange,
+  onSearch,
+  onNextCategory,
+}: SearchBarProps) => {
   const [open, setOpen] = useState<boolean>(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
-    if (query.length === 0) {
+    if (query.length < 2) {
       setSuggestions([]);
+      return undefined;
+    }
+    if (
+      category !== "courseName" &&
+      category !== "teacherName" &&
+      category !== "departmentName"
+    ) {
       return undefined;
     }
     axios
@@ -187,25 +208,17 @@ const SearchBar = ({ category, query, onChange, onSearch }: SearchBarProps) => {
             if (event.key === "Enter") {
               onSearch();
             }
+            if (event.key === " ") {
+              setOpen(false);
+              onNextCategory();
+              event.preventDefault();
+            }
           }}
           InputProps={{
             ...params.InputProps,
             endAdornment: <></>,
           }}
         />
-        // <TextField
-        //   {...params}
-        //   id="outlined-basic"
-        //   variant="outlined"
-        //   label="Search"
-        //   sx={{ width: "90%", maxWidth: "640px" }}
-        //   onChange={(event) => onChange(event.target.value)}
-        //   onKeyPress={(event) => {
-        //     if (event.key === "Enter") {
-        //       onSearch();
-        //     }
-        //   }}
-        // />
       )}
     />
   );
