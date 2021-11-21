@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { createClient } from "redis";
+import { Course } from "../models/course";
 
 const now = (): string => new Date().toISOString();
 
@@ -92,3 +93,45 @@ export async function cachedPost(
     };
   }
 }
+
+export const cacheCourses = async (courses: Course[]) => {
+  const rawCourseNamesZh = (await client.get("courseNamesZh")) ?? "[]";
+  const rawCourseNamesEn = (await client.get("courseNamesEn")) ?? "[]";
+  const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
+  const courseNamesZh: string[] = JSON.parse(rawCourseNamesZh);
+  const courseNamesEn: string[] = JSON.parse(rawCourseNamesEn);
+  const teacherNames: string[] = JSON.parse(rawTeacherNames);
+  for (const course of courses) {
+    if (!courseNamesZh.includes(course.id)) {
+      courseNamesZh.push(course.name["zh-tw"]);
+      courseNamesEn.push(course.name["en-us"]);
+    }
+    if (!teacherNames.includes(course.teacher)) {
+      teacherNames.push(course.teacher);
+    }
+  }
+  await client.set("courseNamesZh", JSON.stringify(courseNamesZh));
+  await client.set("courseNamesEn", JSON.stringify(courseNamesEn));
+  await client.set("teacherNames", JSON.stringify(teacherNames));
+};
+
+export const getCachedCourseNames = async (
+  language: string
+): Promise<string[]> => {
+  if (language === "zh-tw") {
+    const rawCourseNamesZh = (await client.get("courseNamesZh")) ?? "[]";
+    const courseNamesZh: string[] = JSON.parse(rawCourseNamesZh);
+    return courseNamesZh;
+  } else if (language === "en-us") {
+    const rawCourseNamesEn = (await client.get("courseNamesEn")) ?? "[]";
+    const courseNamesEn: string[] = JSON.parse(rawCourseNamesEn);
+    return courseNamesEn;
+  }
+  return [];
+};
+
+export const getCachedTeacherNames = async (): Promise<string[]> => {
+  const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
+  const teacherNames: string[] = JSON.parse(rawTeacherNames);
+  return teacherNames;
+};

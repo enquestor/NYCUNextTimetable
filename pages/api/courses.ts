@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Course } from "../../models/course";
-import { cachedPost } from "../../utils/redis";
+import { cacheCourses, cachedPost } from "../../utils/redis";
 import { parseCourses } from "../../models/course";
 import { encode } from "querystring";
 import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
@@ -24,6 +24,7 @@ export default async function handler(
   // validate request
   if (req.method !== "POST") {
     res.status(405).end();
+    return;
   }
   const params = req.body as CoursesApiParameters;
   const acysem = params.acysem;
@@ -35,11 +36,13 @@ export default async function handler(
     typeof category !== "string" ||
     typeof query !== "string"
   ) {
-    return res.status(400).end();
+    res.status(400).end();
+    return;
   }
   const nycuOption = toNycuOption(category);
   if (nycuOption === "") {
-    return res.status(400).end();
+    res.status(400).end();
+    return;
   }
 
   // format query parameters
@@ -55,7 +58,14 @@ export default async function handler(
     nycuParameter,
     force
   );
+  if (data === null) {
+    res.status(500).end();
+    return;
+  }
   const courses = parseCourses(data!);
+
+  // cache course details
+  cacheCourses(courses);
 
   res.status(200).json({ courses, time });
 }

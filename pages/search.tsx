@@ -14,6 +14,12 @@ import {
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
 
+export const getServerSideProps = async () => {
+  return {
+    props: {},
+  };
+};
+
 const Search: NextPage = () => {
   const router = useRouter();
   const { acysem, category, query } = router.query;
