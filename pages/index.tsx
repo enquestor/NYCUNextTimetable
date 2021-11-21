@@ -1,10 +1,12 @@
 import type { GetStaticProps, NextPage } from "next";
 import Head from "next/head";
 import axios from "axios";
-import { useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
+  Autocomplete,
   Box,
   Button,
+  CircularProgress,
   MenuItem,
   Select,
   Stack,
@@ -78,17 +80,11 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
           NYCU Timetable
         </Typography>
         <Box height="32px" />
-        <TextField
-          id="outlined-basic"
-          variant="outlined"
-          label="Search"
-          sx={{ width: "90%", maxWidth: "640px" }}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyPress={(event) => {
-            if (event.key === "Enter") {
-              handleSearch();
-            }
-          }}
+        <SearchBar
+          category={category}
+          query={query}
+          onChange={(newQuery) => setQuery(newQuery)}
+          onSearch={() => handleSearch()}
         />
         <Box height="20px" />
         <Stack
@@ -131,6 +127,87 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
         <Box height="60px" />
       </Stack>
     </>
+  );
+};
+
+type SearchBarProps = {
+  category: SearchCategory;
+  query: string;
+  onChange: (query: string) => void;
+  onSearch: () => void;
+};
+
+const SearchBar = ({ category, query, onChange, onSearch }: SearchBarProps) => {
+  const [open, setOpen] = useState<boolean>(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (query.length === 0) {
+      setSuggestions([]);
+      return undefined;
+    }
+    axios
+      .post("/api/suggestions", {
+        category: category,
+        query: query,
+      })
+      .then((response) => {
+        setSuggestions(response.data);
+      })
+      .catch((error) => {
+        setSuggestions([]);
+      });
+  }, [query]);
+
+  useEffect(() => {
+    if (!open) {
+      setSuggestions([]);
+    }
+  }, [open]);
+
+  return (
+    <Autocomplete
+      id="asynchronous-demo"
+      sx={{ width: "90%", maxWidth: "640px" }}
+      freeSolo
+      open={open}
+      options={suggestions}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      onChange={(_, newValue) => onChange(newValue as string)}
+      isOptionEqualToValue={(option: string, value: string) => option === value}
+      getOptionLabel={(option: string) => option}
+      filterOptions={(x) => x}
+      renderInput={(params: any) => (
+        <TextField
+          {...params}
+          label="Search"
+          onChange={(event) => onChange(event.target.value)}
+          onKeyPress={(event) => {
+            if (event.key === "Enter") {
+              onSearch();
+            }
+          }}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: <></>,
+          }}
+        />
+        // <TextField
+        //   {...params}
+        //   id="outlined-basic"
+        //   variant="outlined"
+        //   label="Search"
+        //   sx={{ width: "90%", maxWidth: "640px" }}
+        //   onChange={(event) => onChange(event.target.value)}
+        //   onKeyPress={(event) => {
+        //     if (event.key === "Enter") {
+        //       onSearch();
+        //     }
+        //   }}
+        // />
+      )}
+    />
   );
 };
 

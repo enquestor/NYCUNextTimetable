@@ -102,12 +102,17 @@ export const cacheCourses = async (courses: Course[]) => {
   const courseNamesEn: string[] = JSON.parse(rawCourseNamesEn);
   const teacherNames: string[] = JSON.parse(rawTeacherNames);
   for (const course of courses) {
-    if (!courseNamesZh.includes(course.id)) {
+    if (!courseNamesZh.includes(course.name["zh-tw"])) {
       courseNamesZh.push(course.name["zh-tw"]);
+    }
+    if (!courseNamesEn.includes(course.name["en-us"])) {
       courseNamesEn.push(course.name["en-us"]);
     }
-    if (!teacherNames.includes(course.teacher)) {
-      teacherNames.push(course.teacher);
+    const teachers = course.teacher.split(/,|、/);
+    for (const teacher of teachers) {
+      if (!teacherNames.includes(teacher)) {
+        teacherNames.push(teacher);
+      }
     }
   }
   await client.set("courseNamesZh", JSON.stringify(courseNamesZh));
