@@ -3,7 +3,6 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Course } from "../models/course";
-import { SearchCategory } from "../models/search_category";
 import { useState, useEffect } from "react";
 import {
   Box,
@@ -18,6 +17,7 @@ import {
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
 import Cookies from "js-cookie";
+import { toAcysemText, toCategoryText } from "../utils/helpers";
 
 export const getServerSideProps = async () => {
   return {
@@ -71,12 +71,39 @@ const Search: NextPage = () => {
         <Loading isVeryLong={isVeryLong} />
       ) : (
         <Container maxWidth="md">
+          <InfoLine
+            acysem={acysem}
+            category={category}
+            query={query}
+            language={language}
+          />
           {coursesApiResponse.courses.map((course) => (
             <CourseCard course={course} acysem={acysem} language={language} />
           ))}
         </Container>
       )}
     </>
+  );
+};
+
+type InfoLineProps = {
+  acysem: string;
+  category: string;
+  query: string;
+  language: string;
+};
+
+const InfoLine = ({ acysem, category, query, language }: InfoLineProps) => {
+  return (
+    <Stack alignItems="center" p="24px">
+      <Typography variant="h6">{`${toAcysemText(
+        acysem,
+        language
+      )} - Queried ${query} with ${toCategoryText(
+        category,
+        language
+      )}`}</Typography>
+    </Stack>
   );
 };
 
