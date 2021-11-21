@@ -122,7 +122,7 @@ async function nycuCoursesApi(
   const acy = acysem.substr(0, 3);
   const sem = acysem.slice(-1);
   const response = await cachedPost(
-    process.env.NYCU_ENDPOINT + "get_cos_list",
+    process.env.NEXT_PUBLIC_NYCU_ENDPOINT + "get_cos_list",
     encode({
       m_acy: acy,
       m_sem: sem,

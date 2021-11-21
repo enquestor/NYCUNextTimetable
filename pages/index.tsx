@@ -22,7 +22,9 @@ export const getStaticProps: GetStaticProps = async () => {
 
   // get acysems
   try {
-    const response = await axios.get(process.env.NYCU_ENDPOINT + "get_acysem");
+    const response = await axios.get(
+      process.env.NEXT_PUBLIC_NYCU_ENDPOINT + "get_acysem"
+    );
     props.acysems = response.data.map(
       (acysem: { T: string }): string => acysem.T
     );

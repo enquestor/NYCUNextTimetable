@@ -14,7 +14,7 @@ async function slowPost(
   try {
     console.log("request");
     const response = await axios.post(
-      process.env.NYCU_ENDPOINT + endpoint,
+      process.env.NEXT_PUBLIC_NYCU_ENDPOINT + endpoint,
       params,
       config
     );

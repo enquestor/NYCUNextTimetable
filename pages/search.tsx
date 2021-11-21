@@ -7,12 +7,17 @@ import { SearchCategory } from "../models/search_category";
 import { useState, useEffect } from "react";
 import {
   Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
   CircularProgress,
   Container,
   Stack,
   Typography,
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
+import Cookies from "js-cookie";
 
 export const getServerSideProps = async () => {
   return {
@@ -22,7 +27,11 @@ export const getServerSideProps = async () => {
 
 const Search: NextPage = () => {
   const router = useRouter();
-  const { acysem, category, query } = router.query;
+  const parmas = router.query;
+  const acysem: string = parmas.acysem as string;
+  const category: string = parmas.category as string;
+  const query: string = parmas.query as string;
+  const language = Cookies.get("language") ?? "zh-tw";
 
   const [isLoading, setIsLoading] = useState(true);
   const [isVeryLong, setIsVeryLong] = useState(false);
@@ -41,9 +50,13 @@ const Search: NextPage = () => {
       })
       .then((response) => {
         setIsLoading(false);
+        setIsVeryLong(false);
         setCoursesApiResponse(response.data as CoursesApiResponse);
       })
-      .catch((error) => {});
+      .catch((error) => {
+        setIsLoading(false);
+        setIsVeryLong(false);
+      });
     setTimeout(function () {
       setIsVeryLong(true);
     }, 1000);
@@ -57,9 +70,52 @@ const Search: NextPage = () => {
       {isLoading ? (
         <Loading isVeryLong={isVeryLong} />
       ) : (
-        <Container>{JSON.stringify(coursesApiResponse.courses)}</Container>
+        <Container maxWidth="md">
+          {coursesApiResponse.courses.map((course) => (
+            <CourseCard course={course} acysem={acysem} language={language} />
+          ))}
+        </Container>
       )}
     </>
+  );
+};
+
+type CourseCardProps = {
+  course: Course;
+  acysem: string;
+  language: string;
+};
+
+const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
+  const acy = acysem.slice(0, 3);
+  const sem = acysem.slice(3, 4);
+  return (
+    <Card sx={{ mb: "24px" }}>
+      <Box sx={{ p: "12px" }}>
+        <CardContent>
+          <Stack direction="row" alignItems="end">
+            <Typography variant="h4">{course.name[language]}</Typography>
+            <Box width="12px" />
+            <Typography variant="h6">{course.teacher}</Typography>
+            <Box sx={{ flexGrow: 1 }} />
+          </Stack>
+          <Box height="8px" />
+          <Typography variant="body1" color="text.secondary">
+            {course.time} . {course.credits} credits
+          </Typography>
+          {course.memo === "" ? <></> : <Box height="24px" />}
+          <Typography variant="body1">{course.memo}</Typography>
+        </CardContent>
+        <CardActions>
+          <Button>Details</Button>
+          <Button
+            href={`${process.env.NEXT_PUBLIC_NYCU_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
+          >
+            Syllabus
+          </Button>
+        </CardActions>
+      </Box>
+    </Card>
   );
 };
 
