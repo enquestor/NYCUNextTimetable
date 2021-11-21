@@ -1,4 +1,4 @@
-import type { NextPage } from "next";
+import type { GetStaticProps, NextPage } from "next";
 import Head from "next/head";
 import axios from "axios";
 import { useState } from "react";
@@ -11,8 +11,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import Router from "next/router";
+import { SearchCategory } from "../models/search_category";
 
-export const getStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const response = await axios.get(process.env.NYCU_ENDPOINT + "get_acysem");
     const acysems = response.data.map(
@@ -33,29 +35,34 @@ export const getStaticProps = async () => {
   }
 };
 
+const searchCategories: { category: SearchCategory; name: string }[] = [
+  { category: "courseName", name: "Course Name" },
+  { category: "teacherName", name: "Teacher Name" },
+  { category: "departmentName", name: "Department" },
+  { category: "courseId", name: "Course ID" },
+  { category: "coursePermanentId", name: "Permanent ID" },
+];
+
 interface HomeProps {
   acysems: string[];
 }
 
-type SearchCategory =
-  | "courseName"
-  | "courseId"
-  | "coursePermanentId"
-  | "teacherName"
-  | "departmentName";
-
-const searchCategories: { category: SearchCategory; name: string }[] = [
-  { category: "courseName", name: "Course Name" },
-  { category: "courseId", name: "Course ID" },
-  { category: "coursePermanentId", name: "Permanent ID" },
-  { category: "teacherName", name: "Teacher Name" },
-  { category: "departmentName", name: "Department" },
-];
-
 const Home: NextPage<HomeProps> = ({ acysems }) => {
   const [acysem, setAcysem] = useState<string>(acysems[0]);
-  const [searchCategory, setSearchCategory] =
-    useState<SearchCategory>("courseName");
+  const [category, setCategory] = useState<SearchCategory>("courseName");
+  const [query, setQuery] = useState<string>("");
+
+  const handleSearch = () => {
+    Router.push({
+      pathname: "/search",
+      query: {
+        acysem,
+        category,
+        query,
+      },
+    });
+  };
+
   return (
     <>
       <Head>
@@ -76,6 +83,12 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
           variant="outlined"
           label="Search"
           sx={{ width: "90%", maxWidth: "640px" }}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyPress={(event) => {
+            if (event.key === "Enter") {
+              handleSearch();
+            }
+          }}
         />
         <Box height="20px" />
         <Stack
@@ -90,23 +103,30 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
             sx={{ height: "38px", width: "100px" }}
           >
             {acysems.map((acysem) => (
-              <MenuItem value={acysem}>{acysem}</MenuItem>
+              <MenuItem key={acysem} value={acysem}>
+                {acysem}
+              </MenuItem>
             ))}
           </Select>
           <Select
-            value={searchCategory}
+            value={category}
             onChange={(event) =>
-              setSearchCategory(event.target.value as SearchCategory)
+              setCategory(event.target.value as SearchCategory)
             }
             sx={{ height: "38px", width: "160px" }}
           >
             {searchCategories.map((searchCategory) => (
-              <MenuItem value={searchCategory.category}>
+              <MenuItem
+                key={searchCategory.category}
+                value={searchCategory.category}
+              >
                 {searchCategory.name}
               </MenuItem>
             ))}
           </Select>
-          <Button variant="outlined">Search</Button>
+          <Button variant="outlined" onClick={() => handleSearch()}>
+            Search
+          </Button>
         </Stack>
         <Box height="60px" />
       </Stack>

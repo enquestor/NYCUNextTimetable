@@ -3,9 +3,6 @@ import {
   Box,
   Button,
   CssBaseline,
-  FormControl,
-  MenuItem,
-  Select,
   ThemeProvider,
   Toolbar,
   Typography,
@@ -15,6 +12,8 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { createTheme, Theme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import Cookies from "js-cookie";
+import styles from "../styles/Layout.module.css";
+import { useRouter } from "next/router";
 
 declare module "@mui/material/styles" {
   interface PaletteOptions {
@@ -27,6 +26,8 @@ declare module "@mui/material/styles" {
 }
 
 export default ({ children }: any) => {
+  const router = useRouter();
+
   const [theme, setTheme] = useState<"light" | "dark">(preferredTheme());
   const themeOptions = useMemo<Theme>(
     () => createTheme(getThemeOptions(theme)),
@@ -37,17 +38,15 @@ export default ({ children }: any) => {
     <ThemeProvider theme={themeOptions}>
       <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <CssBaseline />
-        <AppBar position="sticky" elevation={0}>
+        <AppBar position="sticky">
           <Toolbar>
-            <TaskAltIcon />
-            <Typography
-              variant="h6"
-              component="div"
-              noWrap
-              sx={{ pl: 3, flexGrow: 1 }}
-            >
-              NYCU Timetable
-            </Typography>
+            <div className={styles.appname} onClick={() => router.push("/")}>
+              <TaskAltIcon />
+              <Typography variant="h6" noWrap sx={{ pl: 3 }}>
+                NYCU Timetable
+              </Typography>
+            </div>
+            <Box sx={{ flexGrow: 1 }} />
             <Button color="inherit">About</Button>
           </Toolbar>
         </AppBar>

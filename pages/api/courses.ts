@@ -5,27 +5,27 @@ import { parseCourses } from "../../models/course";
 import { encode } from "querystring";
 import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
 
-type Parameters = {
+export type CoursesApiParameters = {
   acysem: string;
   category: string;
   query: string;
   force?: boolean;
 };
 
-type Response = {
+export type CoursesApiResponse = {
   courses: Course[];
   time: string;
 };
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<Response>
+  res: NextApiResponse<CoursesApiResponse>
 ) {
   // validate request
   if (req.method !== "POST") {
     res.status(405).end();
   }
-  const params = req.body as Parameters;
+  const params = req.body as CoursesApiParameters;
   const acysem = params.acysem;
   const category = params.category;
   const query = params.query;
