@@ -1,6 +1,10 @@
 import Fuse from "fuse.js";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getCachedCourseNames, getCachedTeacherNames } from "../../utils/redis";
+import {
+  getCachedCourseNames,
+  getCachedDepartmentNames,
+  getCachedTeacherNames,
+} from "../../utils/redis";
 
 export type SuggestionsApiParameters = {
   category: string;
@@ -43,7 +47,10 @@ export default async function handler(
     cached = await getCachedCourseNames(language);
   } else if (category === "teacherName") {
     cached = await getCachedTeacherNames();
+  } else if (category === "departmentName") {
+    cached = await getCachedDepartmentNames(language);
   }
+
   const fuse = new Fuse(cached);
   const suggestions = fuse
     .search(query)

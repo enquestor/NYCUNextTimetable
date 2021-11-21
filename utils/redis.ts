@@ -1,6 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { createClient } from "redis";
 import { Course } from "../models/course";
+import { Department } from "../models/department";
+import { getDepartments } from "./garbage_department_api";
 
 const now = (): string => new Date().toISOString();
 
@@ -95,18 +97,23 @@ export async function cachedPost(
 }
 
 export const cacheCourses = async (courses: Course[]) => {
-  const rawCourseNamesZh = (await client.get("courseNamesZh")) ?? "[]";
-  const rawCourseNamesEn = (await client.get("courseNamesEn")) ?? "[]";
+  let courseNames: { [key: string]: string[] } = {
+    "zh-tw": [],
+    "en-us": [],
+  };
+  const rawCourseNames = await client.get("courseNames");
+  if (rawCourseNames !== null) {
+    courseNames = JSON.parse(rawCourseNames);
+  }
   const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
-  const courseNamesZh: string[] = JSON.parse(rawCourseNamesZh);
-  const courseNamesEn: string[] = JSON.parse(rawCourseNamesEn);
   const teacherNames: string[] = JSON.parse(rawTeacherNames);
+
   for (const course of courses) {
-    if (!courseNamesZh.includes(course.name["zh-tw"])) {
-      courseNamesZh.push(course.name["zh-tw"]);
+    if (!courseNames["zh-tw"].includes(course.name["zh-tw"])) {
+      courseNames["zh-tw"].push(course.name["zh-tw"]);
     }
-    if (!courseNamesEn.includes(course.name["en-us"])) {
-      courseNamesEn.push(course.name["en-us"]);
+    if (!courseNames["en-us"].includes(course.name["en-us"])) {
+      courseNames["en-us"].push(course.name["en-us"]);
     }
     const teachers = course.teacher.split(/,|、/);
     for (const teacher of teachers) {
@@ -115,28 +122,78 @@ export const cacheCourses = async (courses: Course[]) => {
       }
     }
   }
-  await client.set("courseNamesZh", JSON.stringify(courseNamesZh));
-  await client.set("courseNamesEn", JSON.stringify(courseNamesEn));
+
+  await client.set("courseNames", JSON.stringify(courseNames));
   await client.set("teacherNames", JSON.stringify(teacherNames));
+};
+
+export const cacheDepartments = async (
+  departments: Department[],
+  departmentsEn: Department[]
+) => {
+  await client.set("departments", JSON.stringify(departments));
+  let departmentNames = {
+    "zh-tw": departments.map((department) => department.name),
+    "en-us": departmentsEn.map((department) => department.name),
+  };
+  await client.set("departmentNames", JSON.stringify(departmentNames));
 };
 
 export const getCachedCourseNames = async (
   language: string
 ): Promise<string[]> => {
-  if (language === "zh-tw") {
-    const rawCourseNamesZh = (await client.get("courseNamesZh")) ?? "[]";
-    const courseNamesZh: string[] = JSON.parse(rawCourseNamesZh);
-    return courseNamesZh;
-  } else if (language === "en-us") {
-    const rawCourseNamesEn = (await client.get("courseNamesEn")) ?? "[]";
-    const courseNamesEn: string[] = JSON.parse(rawCourseNamesEn);
-    return courseNamesEn;
+  let courseNames: { [key: string]: string[] } = {
+    "zh-tw": [],
+    "en-us": [],
+  };
+  const rawCourseNames = await client.get("courseNames");
+  if (rawCourseNames !== null) {
+    courseNames = JSON.parse(rawCourseNames);
   }
-  return [];
+  return courseNames[language];
 };
 
 export const getCachedTeacherNames = async (): Promise<string[]> => {
   const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
   const teacherNames: string[] = JSON.parse(rawTeacherNames);
   return teacherNames;
+};
+
+export const getCachedDepartments = async (): Promise<Department[] | null> => {
+  const rawDepartments = await client.get("departments");
+  if (rawDepartments === null) {
+    return null;
+  }
+  const departments: Department[] = JSON.parse(rawDepartments);
+  return departments;
+};
+
+export const getCachedDepartmentNames = async (
+  language: string
+): Promise<string[]> => {
+  const rawDepartmentNames = await client.get("departmentNames");
+  let departmentNames: { [key: string]: string[] } = {
+    "zh-tw": [],
+    "en-us": [],
+  };
+  if (rawDepartmentNames === null) {
+    // Since Next.js doesn't provide an easy way to run server-side startup code, we get all departments on the first getCachedDepartmentNames call as a dirty hack
+    const rawDepartments = await client.get("departments");
+    if (rawDepartments === null) {
+      // Mark departments as empty array to prevent getDepartments calls
+      await client.set("departments", JSON.stringify([]));
+      const acysem = process.env.NYCU_ACYSEM_FOR_DEPARTMENTS ?? "1101";
+      console.log("Start Caching Departments ...");
+      Promise.all([
+        getDepartments(acysem, "zh-tw"),
+        getDepartments(acysem, "en-us"),
+      ]).then((result) => {
+        cacheDepartments(result[0], result[1]);
+        console.log("Finish Caching Departments.");
+      });
+    }
+  } else {
+    departmentNames = JSON.parse(rawDepartmentNames);
+  }
+  return departmentNames[language];
 };

@@ -1,12 +1,11 @@
 import type { GetStaticProps, NextPage } from "next";
 import Head from "next/head";
 import axios from "axios";
-import { Fragment, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Autocomplete,
   Box,
   Button,
-  CircularProgress,
   MenuItem,
   Select,
   Stack,
@@ -15,26 +14,23 @@ import {
 } from "@mui/material";
 import Router from "next/router";
 import { SearchCategory } from "../models/search_category";
+import { getDepartments } from "../utils/garbage_department_api";
+import { cacheDepartments, getCachedDepartments } from "../utils/redis";
 
 export const getStaticProps: GetStaticProps = async () => {
+  let props: HomeProps = { acysems: [] };
+
+  // get acysems
   try {
     const response = await axios.get(process.env.NYCU_ENDPOINT + "get_acysem");
-    const acysems = response.data.map(
+    props.acysems = response.data.map(
       (acysem: { T: string }): string => acysem.T
     );
-    return {
-      props: {
-        acysems,
-      } as HomeProps,
-    };
   } catch (error) {
     console.error(error);
-    return {
-      props: {
-        acysems: [],
-      } as HomeProps,
-    };
   }
+
+  return { props };
 };
 
 const searchCategories: { category: SearchCategory; name: string }[] = [
