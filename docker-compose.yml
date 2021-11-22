@@ -10,7 +10,7 @@ services:
   # Redis
   nycuredis:
     container_name: nycuredis
-    image: redis:latest
+    image: allen0hu/nycuredis
     restart: unless-stopped
     tty: true
     # Port forwarding could be removed in production
@@ -19,6 +19,5 @@ services:
     #   - "6379:6379"
     volumes:
       - "nycuredis-cache:/data"
-      - "${PWD}/redis.conf:/usr/local/etc/redis/redis.conf"
 volumes:
   nycuredis-cache:
