@@ -1,7 +1,11 @@
-export const toAcysemText = (acysem: string, language: string): string => {
+export const separateAcysem = (acysem: string) => {
   const acy = acysem.slice(0, acysem.length - 1);
   const sem = acysem.slice(acysem.length - 1, acysem.length);
+  return { acy, sem };
+};
 
+export const toAcysemText = (acysem: string, language: string): string => {
+  const { acy, sem } = separateAcysem(acysem);
   let semText = "";
   if (language === "zh-tw") {
     if (sem === "1") {
@@ -35,7 +39,7 @@ export const toCategoryText = (category: string, language: string): string => {
   }
   if (category === "departmentName") {
     // return "Department";
-    return "科系 / 分類";
+    return "科系/分類";
   }
   if (category === "courseId") {
     // return "Course ID";

@@ -12,12 +12,15 @@ import {
   CardContent,
   CircularProgress,
   Container,
+  Fab,
   Stack,
   Typography,
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
 import Cookies from "js-cookie";
-import { toAcysemText, toCategoryText } from "../utils/helpers";
+import { separateAcysem, toAcysemText, toCategoryText } from "../utils/helpers";
+import { Refresh } from "@mui/icons-material";
+import { DateTime } from "luxon";
 
 export const getServerSideProps = async () => {
   return {
@@ -33,8 +36,8 @@ const Search: NextPage = () => {
   const query: string = parmas.query as string;
   const language = Cookies.get("language") ?? "zh-tw";
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isVeryLong, setIsVeryLong] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [veryLong, setVeryLong] = useState(false);
   const [coursesApiResponse, setCoursesApiResponse] =
     useState<CoursesApiResponse>({
       courses: [],
@@ -49,26 +52,44 @@ const Search: NextPage = () => {
         query: query,
       })
       .then((response) => {
-        setIsLoading(false);
-        setIsVeryLong(false);
+        setLoading(false);
+        setVeryLong(false);
         setCoursesApiResponse(response.data as CoursesApiResponse);
       })
       .catch((error) => {
-        setIsLoading(false);
-        setIsVeryLong(false);
+        setLoading(false);
+        setVeryLong(false);
       });
     setTimeout(function () {
-      setIsVeryLong(true);
+      setVeryLong(true);
     }, 1000);
   }, []);
+
+  const handleForceRefresh = () => {
+    setLoading(true);
+    axios
+      .post("/api/courses", {
+        acysem: acysem,
+        category: category,
+        query: query,
+        force: true,
+      })
+      .then((response) => {
+        setLoading(false);
+        setCoursesApiResponse(response.data as CoursesApiResponse);
+      })
+      .catch((error) => {
+        setLoading(false);
+      });
+  };
 
   return (
     <>
       <Head>
         <title>{query} - NYCU Timetable</title>
       </Head>
-      {isLoading ? (
-        <Loading isVeryLong={isVeryLong} />
+      {loading ? (
+        <Loading veryLong={veryLong} />
       ) : (
         <Container maxWidth="md">
           <InfoLine
@@ -76,6 +97,7 @@ const Search: NextPage = () => {
             category={category}
             query={query}
             language={language}
+            time={coursesApiResponse.time}
           />
           {coursesApiResponse.courses.map((course) => (
             <CourseCard
@@ -87,6 +109,14 @@ const Search: NextPage = () => {
           ))}
         </Container>
       )}
+      <Fab
+        color="primary"
+        aria-label="add"
+        style={{ position: "fixed", right: "12px", bottom: "12px" }}
+        onClick={() => handleForceRefresh()}
+      >
+        <Refresh />
+      </Fab>
     </>
   );
 };
@@ -96,18 +126,31 @@ type InfoLineProps = {
   category: string;
   query: string;
   language: string;
+  time: string;
 };
 
-const InfoLine = ({ acysem, category, query, language }: InfoLineProps) => {
+const InfoLine = ({
+  acysem,
+  category,
+  query,
+  language,
+  time,
+}: InfoLineProps) => {
+  const formattedTime = DateTime.fromISO(time).toLocaleString(
+    DateTime.DATETIME_MED
+  );
   return (
-    <Stack alignItems="center" p="24px">
-      <Typography variant="h6">{`${toAcysemText(
-        acysem,
-        language
-      )} - 在 ${toCategoryText(
+    <Stack
+      direction="column"
+      justifyContent="center"
+      alignItems="center"
+      p="24px"
+    >
+      <Typography variant="h6">{`在 ${toCategoryText(
         category,
         language
       )} 查詢了 ${query}`}</Typography>
+      <Typography variant="body2">快取時間：{formattedTime}</Typography>
     </Stack>
   );
 };
@@ -119,8 +162,7 @@ type CourseCardProps = {
 };
 
 const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
-  const acy = acysem.slice(0, 3);
-  const sem = acysem.slice(3, 4);
+  const { acy, sem } = separateAcysem(acysem);
   return (
     <Card sx={{ mb: "24px" }}>
       <Box sx={{ p: "12px" }}>
@@ -139,11 +181,11 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
           <Typography variant="body1">{course.memo}</Typography>
         </CardContent>
         <CardActions>
-          <Button>Details</Button>
+          <Button>詳細資料</Button>
           <Button
             href={`${process.env.NEXT_PUBLIC_NYCU_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
           >
-            Syllabus
+            課程綱要
           </Button>
         </CardActions>
       </Box>
@@ -152,10 +194,10 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
 };
 
 type LoadingProps = {
-  isVeryLong?: boolean;
+  veryLong?: boolean;
 };
 
-const Loading = ({ isVeryLong }: LoadingProps) => {
+const Loading = ({ veryLong }: LoadingProps) => {
   return (
     <Stack
       flex={1}
@@ -164,9 +206,9 @@ const Loading = ({ isVeryLong }: LoadingProps) => {
       alignItems="center"
     >
       <CircularProgress />
-      <Box height="30px" sx={{ opacity: isVeryLong ? 1 : 0 }} pt="24px">
+      <Box height="30px" sx={{ opacity: veryLong ? 1 : 0 }} pt="24px">
         <Typography variant="subtitle1" textAlign="center">
-          This page has not been cached, so it would take a while to load...
+          本次查詢未被快取，正在從 NYCU 課表抓資料...
         </Typography>
       </Box>
     </Stack>
