@@ -21,6 +21,7 @@ import Cookies from "js-cookie";
 import { separateAcysem, toAcysemText, toCategoryText } from "../utils/helpers";
 import { Refresh } from "@mui/icons-material";
 import { DateTime } from "luxon";
+import LazyLoad from "react-lazyload";
 
 export const getServerSideProps = async () => {
   return {
@@ -62,7 +63,7 @@ const Search: NextPage = () => {
       });
     setTimeout(function () {
       setVeryLong(true);
-    }, 1000);
+    }, 2000);
   }, []);
 
   const handleForceRefresh = () => {
@@ -100,12 +101,14 @@ const Search: NextPage = () => {
             time={coursesApiResponse.time}
           />
           {coursesApiResponse.courses.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              acysem={acysem}
-              language={language}
-            />
+            <LazyLoad key={course.id}>
+              <CourseCard
+                key={course.id}
+                course={course}
+                acysem={acysem}
+                language={language}
+              />
+            </LazyLoad>
           ))}
         </Container>
       )}
