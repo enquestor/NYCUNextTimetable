@@ -25,10 +25,13 @@ declare module "@mui/material/styles" {
   }
 }
 
-export default ({ children }: any) => {
+const Layout = ({ children }: any) => {
   const router = useRouter();
 
-  const [theme, setTheme] = useState<"light" | "dark">(preferredTheme());
+  const browserPreference = useMediaQuery("(prefers-color-scheme: dark)");
+  const [theme, setTheme] = useState<"light" | "dark">(
+    preferredTheme(browserPreference)
+  );
   const themeOptions = useMemo<Theme>(
     () => createTheme(getThemeOptions(theme)),
     [theme]
@@ -72,9 +75,11 @@ export const getThemeOptions = (mode: "light" | "dark") => ({
   spacing: 8,
 });
 
-const preferredTheme = (): "light" | "dark" => {
+const preferredTheme = (browserPreference: boolean): "light" | "dark" => {
   if (Cookies.get("paletteMode") !== undefined) {
     return Cookies.get("paletteMode") as "light" | "dark";
   }
-  return useMediaQuery("(prefers-color-scheme: dark)") ? "dark" : "light";
+  return browserPreference ? "dark" : "light";
 };
+
+export default Layout;
