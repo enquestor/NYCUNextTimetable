@@ -14,8 +14,8 @@ import {
 } from "@mui/material";
 import Router from "next/router";
 import { SearchCategory } from "../models/search_category";
-import { getDepartments } from "../utils/garbage_department_api";
-import { cacheDepartments, getCachedDepartments } from "../utils/redis";
+import Cookies from "js-cookie";
+import { toAcysemText, toCategoryText } from "../utils/helpers";
 
 export const getStaticProps: GetStaticProps = async () => {
   let props: HomeProps = { acysems: [] };
@@ -35,12 +35,19 @@ export const getStaticProps: GetStaticProps = async () => {
   return { props };
 };
 
-const searchCategories: { category: SearchCategory; name: string }[] = [
-  { category: "courseName", name: "Course Name" },
-  { category: "teacherName", name: "Teacher Name" },
-  { category: "departmentName", name: "Department" },
-  { category: "courseId", name: "Course ID" },
-  { category: "coursePermanentId", name: "Permanent ID" },
+// const searchCategories: { category: SearchCategory; name: string }[] = [
+//   { category: "courseName", name: "課程名稱" },
+//   { category: "teacherName", name: "教師名稱" },
+//   { category: "departmentName", name: "科系 / 分類" },
+//   { category: "courseId", name: "當期課號" },
+//   { category: "coursePermanentId", name: "永久課號" },
+// ];
+const searchCategories: SearchCategory[] = [
+  "courseName",
+  "teacherName",
+  "departmentName",
+  "courseId",
+  "coursePermanentId",
 ];
 
 interface HomeProps {
@@ -51,6 +58,7 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
   const [acysem, setAcysem] = useState<string>(acysems[0]);
   const [category, setCategory] = useState<SearchCategory>("courseName");
   const [query, setQuery] = useState<string>("");
+  const language = Cookies.get("language") ?? "zh-tw";
 
   const handleSearch = () => {
     Router.push({
@@ -85,10 +93,10 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
           onSearch={() => handleSearch()}
           onNextCategory={() => {
             const categoryIndex = searchCategories.findIndex(
-              (searchCategory) => searchCategory.category === category
+              (searchCategory) => searchCategory === category
             );
             const newCategory = (categoryIndex + 1) % searchCategories.length;
-            setCategory(searchCategories[newCategory].category);
+            setCategory(searchCategories[newCategory]);
           }}
         />
         <Box height="20px" />
@@ -105,7 +113,7 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
           >
             {acysems.map((acysem) => (
               <MenuItem key={acysem} value={acysem}>
-                {acysem}
+                {toAcysemText(acysem, "zh-tw")}
               </MenuItem>
             ))}
           </Select>
@@ -117,16 +125,13 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
             sx={{ height: "38px", width: "160px" }}
           >
             {searchCategories.map((searchCategory) => (
-              <MenuItem
-                key={searchCategory.category}
-                value={searchCategory.category}
-              >
-                {searchCategory.name}
+              <MenuItem key={searchCategory} value={searchCategory}>
+                {toCategoryText(searchCategory, "zh-tw")}
               </MenuItem>
             ))}
           </Select>
           <Button variant="outlined" onClick={() => handleSearch()}>
-            Search
+            搜尋
           </Button>
         </Stack>
         <Box height="60px" />
@@ -200,7 +205,7 @@ const SearchBar = ({
       renderInput={(params: any) => (
         <TextField
           {...params}
-          label="Search"
+          label="搜尋"
           onChange={(event) => onChange(event.target.value)}
           onKeyPress={(event) => {
             if (event.key === "Enter") {

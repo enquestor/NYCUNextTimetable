@@ -78,7 +78,12 @@ const Search: NextPage = () => {
             language={language}
           />
           {coursesApiResponse.courses.map((course) => (
-            <CourseCard course={course} acysem={acysem} language={language} />
+            <CourseCard
+              key={course.id}
+              course={course}
+              acysem={acysem}
+              language={language}
+            />
           ))}
         </Container>
       )}
@@ -99,10 +104,10 @@ const InfoLine = ({ acysem, category, query, language }: InfoLineProps) => {
       <Typography variant="h6">{`${toAcysemText(
         acysem,
         language
-      )} - Queried ${query} with ${toCategoryText(
+      )} - 在 ${toCategoryText(
         category,
         language
-      )}`}</Typography>
+      )} 查詢了 ${query}`}</Typography>
     </Stack>
   );
 };

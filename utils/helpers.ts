@@ -1,8 +1,6 @@
-import { SearchCategory } from "../models/search_category";
-
 export const toAcysemText = (acysem: string, language: string): string => {
-  const acy = acysem.slice(0, 3);
-  const sem = acysem.slice(3, 4);
+  const acy = acysem.slice(0, acysem.length - 1);
+  const sem = acysem.slice(acysem.length - 1, acysem.length);
 
   let semText = "";
   if (language === "zh-tw") {
@@ -28,19 +26,24 @@ export const toAcysemText = (acysem: string, language: string): string => {
 
 export const toCategoryText = (category: string, language: string): string => {
   if (category === "courseName") {
-    return "Course Name";
+    // return "Course Name";
+    return "課程名稱";
   }
   if (category === "teacherName") {
-    return "Teacher Name";
+    // return "Teacher Name";
+    return "教師名稱";
   }
   if (category === "departmentName") {
-    return "Department";
+    // return "Department";
+    return "科系 / 分類";
   }
   if (category === "courseId") {
-    return "Course ID";
+    // return "Course ID";
+    return "當期課號";
   }
   if (category === "coursePermanentId") {
-    return "Permanent ID";
+    // return "Permanent ID";
+    return "永久課號";
   }
   return "";
 };

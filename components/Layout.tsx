@@ -47,7 +47,7 @@ export default ({ children }: any) => {
               </Typography>
             </div>
             <Box sx={{ flexGrow: 1 }} />
-            <Button color="inherit">About</Button>
+            <Button color="inherit">關於</Button>
           </Toolbar>
         </AppBar>
         {children}
