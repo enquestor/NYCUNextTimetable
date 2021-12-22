@@ -1,34 +1,40 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is a course search/browser that aims to create a better experience compared to the original [NYCU timetable](https://timetable.nycu.edu.tw/).
 
-## Getting Started
+[Demo](https://timetable.yagami.dev)
 
-First, run the development server:
+## Install
 
-```bash
-npm run dev
-# or
-yarn dev
+You can deploy the server with `docker-compose`.
+```
+curl https://raw.githubusercontent.com/Allen-Hu/nycunext/main/docker-compose.yml > docker-compose.yml
+docker-compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+You will be able to access the website at http://localhost:3000
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Development
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+1. Clone this project
+```
+git clone https://github.com/Allen-Hu/nycunext.git
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+2. Install dependencies
+```
+npm i
+```
 
-## Learn More
+3. Run dev server
+```
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Production build
+```
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Build docker image
+```
+docker build -t [image-name] .
+```
