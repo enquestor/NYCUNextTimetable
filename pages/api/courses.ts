@@ -8,13 +8,15 @@ import {
 import { parseCourses } from "../../models/course";
 import { encode } from "querystring";
 import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
+import Joi from "joi";
+import { separateAcysem } from "../../utils/helpers";
 
-export type CoursesApiParameters = {
+export type CourseApiParameters = {
   acysem: string;
   category: string;
   query: string;
-  language?: string;
-  force?: boolean;
+  language: string;
+  force: boolean;
 };
 
 export type CoursesApiResponse = {
@@ -22,48 +24,58 @@ export type CoursesApiResponse = {
   time: string;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<CoursesApiResponse>
-) {
-  // validate request
+const schema = Joi.object<CourseApiParameters>({
+  acysem: Joi.string().required(),
+  category: Joi.string()
+    .required()
+    .valid(
+      "courseName",
+      "teacherName",
+      "departmentName",
+      "courseId",
+      "coursePermanentId"
+    ),
+  query: Joi.string().required(),
+  language: Joi.string().default("zh-tw"),
+  force: Joi.boolean().default(false),
+});
+
+export default async function (req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.status(405).end();
     return;
   }
-  const params = req.body as CoursesApiParameters;
-  const acysem = params.acysem;
-  const category = params.category;
-  const query = params.query;
-  const language = params.language ?? "zh-tw";
-  const force = params.force ?? false;
+
+  let params = schema.validate(req.body);
   if (
-    typeof acysem !== "string" ||
-    typeof category !== "string" ||
-    typeof query !== "string" ||
-    (language !== "zh-tw" && language !== "en-us")
+    typeof params.value === "undefined" ||
+    typeof params.error !== "undefined"
   ) {
-    res.status(400).end();
+    res.status(400).json(params.error?.message);
     return;
   }
-  const nycuOption = toNycuOption(category);
+
+  const nycuOption = toNycuOption(params.value.category);
   if (nycuOption === "") {
     res.status(400).end();
     return;
   }
 
   // format query parameters
-  let nycuParameter = query;
+  let nycuParameter = params.value.query;
   if (nycuOption === "dep") {
-    nycuParameter = await toDepartmentId(query, language);
+    nycuParameter = await toDepartmentId(
+      params.value.query,
+      params.value.language
+    );
   }
 
   // get courses from nycu
   const { data, time } = await nycuCoursesApi(
-    acysem,
+    params.value.acysem,
     nycuOption,
     nycuParameter,
-    force
+    params.value.force
   );
   if (data === null) {
     res.status(500).end();
@@ -119,8 +131,8 @@ async function nycuCoursesApi(
   parameter: string,
   force: boolean
 ): Promise<CachedNycuCoursesApiReponse> {
-  const acy = acysem.substr(0, 3);
-  const sem = acysem.slice(-1);
+  const { acy, sem } = separateAcysem(acysem);
+  console.log(acy, sem);
   const response = await cachedPost(
     process.env.NEXT_PUBLIC_NYCU_ENDPOINT + "get_cos_list",
     encode({
@@ -140,6 +152,7 @@ async function nycuCoursesApi(
       m_crstime: "**",
       m_crsoutline: "**",
       m_costype: "**",
+      m_selcampus: "**",
     }),
     {
       headers: {
