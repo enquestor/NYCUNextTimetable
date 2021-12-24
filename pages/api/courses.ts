@@ -97,21 +97,6 @@ type CachedNycuCoursesApiReponse = {
   time: string;
 };
 
-// async function toDepartmentId(
-//   departmentName: string,
-//   language: string
-// ): Promise<string> {
-//   const departments = await getCachedDepartments(language);
-//   const target = departments.find((department) =>
-//     department.name.includes(departmentName)
-//   );
-//   if (typeof target === "undefined") {
-//     return "";
-//   } else {
-//     return target.id;
-//   }
-// }
-
 async function nycuCoursesApi(
   acysem: string,
   option: string,
