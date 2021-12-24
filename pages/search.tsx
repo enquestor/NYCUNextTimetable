@@ -35,7 +35,10 @@ const Search: NextPage = () => {
   const acysem: string = parmas.acysem as string;
   const category: string = parmas.category as string;
   const query: string = parmas.query as string;
-  const language = Cookies.get("language") ?? "zh-tw";
+  const language = "zh-tw"; // TODO: en-us language support
+  const departmentId: string | undefined = parmas.departmentId as
+    | string
+    | undefined;
 
   const [loading, setLoading] = useState(true);
   const [veryLong, setVeryLong] = useState(false);
@@ -48,9 +51,9 @@ const Search: NextPage = () => {
   useEffect(() => {
     axios
       .post("/api/courses", {
-        acysem: acysem,
-        category: category,
-        query: query,
+        acysem,
+        category,
+        query: category === "departmentName" ? departmentId : query,
       })
       .then((response) => {
         setLoading(false);
@@ -186,7 +189,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
         <CardActions>
           <Button>詳細資料</Button>
           <Button
-            href={`${process.env.NEXT_PUBLIC_NYCU_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
+            href={`${process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
           >
             課程綱要
           </Button>

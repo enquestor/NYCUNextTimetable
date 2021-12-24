@@ -2,7 +2,6 @@ import axios, { AxiosRequestConfig } from "axios";
 import { createClient } from "redis";
 import { Course } from "../models/course";
 import { Department } from "../models/department";
-import { getDepartments } from "./garbage_department_api";
 
 const now = (): string => new Date().toISOString();
 
@@ -161,46 +160,4 @@ export const getCachedTeacherNames = async (): Promise<string[]> => {
   const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
   const teacherNames: string[] = JSON.parse(rawTeacherNames);
   return teacherNames;
-};
-
-export const getCachedDepartments = async (
-  language: string
-): Promise<Department[]> => {
-  const rawDepartments = await client.get("departments");
-  if (rawDepartments === null) {
-    return [];
-  }
-  const departments: { [key: string]: Department[] } =
-    JSON.parse(rawDepartments);
-  return departments[language];
-};
-
-export const getCachedDepartmentNames = async (
-  language: string
-): Promise<string[]> => {
-  const rawDepartmentNames = await client.get("departmentNames");
-  let departmentNames: { [key: string]: string[] } = {
-    "zh-tw": [],
-    "en-us": [],
-  };
-  if (rawDepartmentNames === null) {
-    // Since Next.js doesn't provide an easy way to run server-side startup code, we get all departments on the first getCachedDepartmentNames call as a dirty hack
-    const rawDepartments = await client.get("departments");
-    if (rawDepartments === null) {
-      // Mark departments as empty array to prevent getDepartments calls
-      await client.set("departments", JSON.stringify([]));
-      const acysem = process.env.NYCU_ACYSEM_FOR_DEPARTMENTS ?? "1101";
-      console.log("Start Caching Departments ...");
-      Promise.all([
-        getDepartments(acysem, "zh-tw"),
-        getDepartments(acysem, "en-us"),
-      ]).then((result) => {
-        cacheDepartments(result[0], result[1]);
-        console.log("Finish Caching Departments.");
-      });
-    }
-  } else {
-    departmentNames = JSON.parse(rawDepartmentNames);
-  }
-  return departmentNames[language];
 };

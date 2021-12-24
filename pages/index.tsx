@@ -16,20 +16,37 @@ import Router from "next/router";
 import { SearchCategory } from "../models/search_category";
 import Cookies from "js-cookie";
 import { toAcysemText, toCategoryText } from "../utils/helpers";
+import { getDepartments } from "../utils/garbage_department_api";
+import { cacheDepartments } from "../utils/redis";
+import { Department } from "../models/department";
+import Fuse from "fuse.js";
+import { DEV_DEPARTMENTS } from "../utils/constants";
 
 export const getStaticProps: GetStaticProps = async () => {
-  let props: HomeProps = { acysems: [] };
+  let props: HomeProps = {
+    acysems: [],
+    departments: [],
+  };
 
   // get acysems
+  console.log("get acysems");
   try {
     const response = await axios.get(
-      process.env.NEXT_PUBLIC_NYCU_ENDPOINT + "get_acysem"
+      process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT + "get_acysem"
     );
     props.acysems = response.data.map(
       (acysem: { T: string }): string => acysem.T
     );
   } catch (error) {
     console.error(error);
+  }
+
+  // get departments
+  console.log("get departments");
+  if (process.env.NODE_ENV === "production") {
+    props.departments = await getDepartments(props.acysems[0]);
+  } else {
+    props.departments = DEV_DEPARTMENTS;
   }
 
   return { props };
@@ -52,23 +69,34 @@ const searchCategories: SearchCategory[] = [
 
 interface HomeProps {
   acysems: string[];
+  departments: Department[];
 }
 
-const Home: NextPage<HomeProps> = ({ acysems }) => {
+const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
   const [acysem, setAcysem] = useState<string>(acysems[0]);
   const [category, setCategory] = useState<SearchCategory>("courseName");
   const [query, setQuery] = useState<string>("");
-  const language = Cookies.get("language") ?? "zh-tw";
+  const language = "zh-tw"; // TODO: en-us language support
 
   const handleSearch = () => {
+    const suggestions = getDepartmentSuggestions(query);
+    const first = suggestions[0];
     Router.push({
       pathname: "/search",
       query: {
         acysem,
         category,
         query,
+        departmentId: suggestions[0].id,
       },
     });
+  };
+
+  const getDepartmentSuggestions = (departmentName: string): Department[] => {
+    const fuse = new Fuse(departments, {
+      keys: [["name", language]],
+    });
+    return fuse.search(departmentName).map((e) => e.item);
   };
 
   return (
@@ -89,6 +117,10 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
         <SearchBar
           category={category}
           query={query}
+          language={language}
+          getDepartmentSuggestions={(departmentName) =>
+            getDepartmentSuggestions(departmentName)
+          }
           onChange={(newQuery) => setQuery(newQuery)}
           onSearch={() => handleSearch()}
           onNextCategory={() => {
@@ -143,6 +175,8 @@ const Home: NextPage<HomeProps> = ({ acysems }) => {
 type SearchBarProps = {
   category: SearchCategory;
   query: string;
+  language: string;
+  getDepartmentSuggestions(departmentName: string): Department[];
   onChange: (query: string) => void;
   onSearch: () => void;
   onNextCategory: () => void;
@@ -151,6 +185,8 @@ type SearchBarProps = {
 const SearchBar = ({
   category,
   query,
+  language,
+  getDepartmentSuggestions,
   onChange,
   onSearch,
   onNextCategory,
@@ -163,24 +199,26 @@ const SearchBar = ({
       setSuggestions([]);
       return undefined;
     }
-    if (
-      category !== "courseName" &&
-      category !== "teacherName" &&
-      category !== "departmentName"
-    ) {
-      return undefined;
+    if (category === "courseName" || category === "teacherName") {
+      axios
+        .post("/api/suggestions", {
+          category: category,
+          query: query,
+        })
+        .then((response) => {
+          setSuggestions(response.data);
+        })
+        .catch((error) => {
+          setSuggestions([]);
+        });
+    } else if (category === "departmentName") {
+      const result = getDepartmentSuggestions(query)
+        .map((e) => e.name[language])
+        .slice(0, parseInt(process.env.NEXT_PUBLIC_RECOMMENDATION_COUNT!));
+      setSuggestions(result);
+    } else {
+      setSuggestions([]);
     }
-    axios
-      .post("/api/suggestions", {
-        category: category,
-        query: query,
-      })
-      .then((response) => {
-        setSuggestions(response.data);
-      })
-      .catch((error) => {
-        setSuggestions([]);
-      });
   }, [query]);
 
   useEffect(() => {

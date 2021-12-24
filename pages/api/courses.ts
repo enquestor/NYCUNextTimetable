@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Course } from "../../models/course";
-import {
-  cacheCourses,
-  cachedPost,
-  getCachedDepartments,
-} from "../../utils/redis";
+import { cacheCourses, cachedPost } from "../../utils/redis";
 import { parseCourses } from "../../models/course";
 import { encode } from "querystring";
 import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
@@ -61,20 +57,11 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
     return;
   }
 
-  // format query parameters
-  let nycuParameter = params.value.query;
-  if (nycuOption === "dep") {
-    nycuParameter = await toDepartmentId(
-      params.value.query,
-      params.value.language
-    );
-  }
-
   // get courses from nycu
   const { data, time } = await nycuCoursesApi(
     params.value.acysem,
     nycuOption,
-    nycuParameter,
+    params.value.query,
     params.value.force
   );
   if (data === null) {
@@ -110,20 +97,20 @@ type CachedNycuCoursesApiReponse = {
   time: string;
 };
 
-async function toDepartmentId(
-  departmentName: string,
-  language: string
-): Promise<string> {
-  const departments = await getCachedDepartments(language);
-  const target = departments.find((department) =>
-    department.name.includes(departmentName)
-  );
-  if (typeof target === "undefined") {
-    return "";
-  } else {
-    return target.id;
-  }
-}
+// async function toDepartmentId(
+//   departmentName: string,
+//   language: string
+// ): Promise<string> {
+//   const departments = await getCachedDepartments(language);
+//   const target = departments.find((department) =>
+//     department.name.includes(departmentName)
+//   );
+//   if (typeof target === "undefined") {
+//     return "";
+//   } else {
+//     return target.id;
+//   }
+// }
 
 async function nycuCoursesApi(
   acysem: string,
@@ -132,9 +119,8 @@ async function nycuCoursesApi(
   force: boolean
 ): Promise<CachedNycuCoursesApiReponse> {
   const { acy, sem } = separateAcysem(acysem);
-  console.log(acy, sem);
   const response = await cachedPost(
-    process.env.NEXT_PUBLIC_NYCU_ENDPOINT + "get_cos_list",
+    process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT + "get_cos_list",
     encode({
       m_acy: acy,
       m_sem: sem,

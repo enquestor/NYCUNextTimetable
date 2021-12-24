@@ -1,11 +1,7 @@
 import Fuse from "fuse.js";
 import Joi from "joi";
 import type { NextApiRequest, NextApiResponse } from "next";
-import {
-  getCachedCourseNames,
-  getCachedDepartmentNames,
-  getCachedTeacherNames,
-} from "../../utils/redis";
+import { getCachedCourseNames, getCachedTeacherNames } from "../../utils/redis";
 
 export type SuggestionApiParameters = {
   category: string;
@@ -14,9 +10,7 @@ export type SuggestionApiParameters = {
 };
 
 const schema = Joi.object<SuggestionApiParameters>({
-  category: Joi.string()
-    .required()
-    .valid("courseName", "teacherName", "departmentName"),
+  category: Joi.string().required().valid("courseName", "teacherName"),
   query: Joi.string().required(),
   language: Joi.string().default("zh-tw"),
 });
@@ -48,15 +42,12 @@ export default async function handler(
     case "teacherName":
       cached = await getCachedTeacherNames();
       break;
-    case "departmentName":
-      cached = await getCachedDepartmentNames(params.value.language);
-      break;
   }
 
   const fuse = new Fuse(cached);
   const suggestions = fuse
     .search(params.value.query)
     .map((e) => e.item)
-    .slice(0, 5);
+    .slice(0, parseInt(process.env.NEXT_PUBLIC_RECOMMENDATION_COUNT!));
   res.status(200).json(suggestions);
 }
