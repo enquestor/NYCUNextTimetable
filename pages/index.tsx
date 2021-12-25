@@ -79,17 +79,27 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
   const language = "zh-tw"; // TODO: en-us language support
 
   const handleSearch = () => {
-    const suggestions = getDepartmentSuggestions(query);
-    const first = suggestions[0];
-    Router.push({
-      pathname: "/search",
-      query: {
-        acysem,
-        category,
-        query,
-        departmentId: suggestions[0].id,
-      },
-    });
+    if (category === "departmentName") {
+      const suggestions = getDepartmentSuggestions(query);
+      Router.push({
+        pathname: "/search",
+        query: {
+          acysem,
+          category,
+          query,
+          departmentId: suggestions[0].id,
+        },
+      });
+    } else {
+      Router.push({
+        pathname: "/search",
+        query: {
+          acysem,
+          category,
+          query,
+        },
+      });
+    }
   };
 
   const getDepartmentSuggestions = (departmentName: string): Department[] => {
