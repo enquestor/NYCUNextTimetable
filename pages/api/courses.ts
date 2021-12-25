@@ -7,7 +7,7 @@ import { NycuCoursesApiReponse } from "../../models/nycu_courses_api_response";
 import Joi from "joi";
 import { separateAcysem } from "../../utils/helpers";
 
-export type CourseApiParameters = {
+export type CoursesApiParameters = {
   acysem: string;
   category: string;
   query: string;
@@ -20,7 +20,7 @@ export type CoursesApiResponse = {
   time: string;
 };
 
-const schema = Joi.object<CourseApiParameters>({
+const schema = Joi.object<CoursesApiParameters>({
   acysem: Joi.string().required(),
   category: Joi.string()
     .required()

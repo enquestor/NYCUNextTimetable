@@ -24,7 +24,19 @@ git clone https://github.com/Allen-Hu/nycunext.git
 npm i
 ```
 
-3. Run dev server
+3. Start a local redis server
+You can use docker image from [official redis docker hub](https://hub.docker.com/_/redis) like this:
+```
+docker run --name some-redis -d redis
+```
+
+Check if your server is up and running by connecting to it with redis-cli:
+```
+redis-cli
+127.0.0.1:6379>
+```
+
+4. Run dev server
 ```
 npm run dev
 ```

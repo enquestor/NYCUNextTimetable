@@ -3,13 +3,13 @@ import Joi from "joi";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getCachedCourseNames, getCachedTeacherNames } from "../../utils/redis";
 
-export type SuggestionApiParameters = {
+export type SuggestionsApiParameters = {
   category: string;
   query: string;
   language: string;
 };
 
-const schema = Joi.object<SuggestionApiParameters>({
+const schema = Joi.object<SuggestionsApiParameters>({
   category: Joi.string().required().valid("courseName", "teacherName"),
   query: Joi.string().required(),
   language: Joi.string().default("zh-tw"),
