@@ -2,6 +2,8 @@ import axios, { AxiosRequestConfig } from "axios";
 import { createClient } from "redis";
 import { Course } from "../models/course";
 import { Department } from "../models/department";
+import { Name } from "../models/name";
+import { dataKey, hasName } from "./helpers";
 
 const now = (): string => new Date().toISOString();
 
@@ -95,35 +97,44 @@ export async function cachedPost(
   }
 }
 
-export const cacheCourses = async (courses: Course[]) => {
-  let courseNames: { [key: string]: string[] } = {
-    "zh-tw": [],
-    "en-us": [],
-  };
-  const rawCourseNames = await client.get("courseNames");
+export const cacheCourses = async (acysem: string, courses: Course[]) => {
+  // let courseNames: { [key: string]: string[] } = {
+  //   "zh-tw": [],
+  //   "en-us": [],
+  // };
+
+  // get course names
+  const courseNameKey = dataKey(acysem, "courseName");
+  let courseNames: Name[] = [];
+  const rawCourseNames = await client.get(courseNameKey);
   if (rawCourseNames !== null) {
     courseNames = JSON.parse(rawCourseNames);
   }
-  const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
-  const teacherNames: string[] = JSON.parse(rawTeacherNames);
+
+  // get teacher names
+  const teacherNameKey = dataKey(acysem, "teacherName");
+  let teacherNames: Name[] = [];
+  const rawTeacherNames = await client.get(teacherNameKey);
+  if (rawTeacherNames !== null) {
+    teacherNames = JSON.parse(rawTeacherNames);
+  }
 
   for (const course of courses) {
-    if (!courseNames["zh-tw"].includes(course.name["zh-tw"])) {
-      courseNames["zh-tw"].push(course.name["zh-tw"]);
-    }
-    if (!courseNames["en-us"].includes(course.name["en-us"])) {
-      courseNames["en-us"].push(course.name["en-us"]);
+    if (!hasName(courseNames, course.name)) {
+      courseNames.push(course.name);
     }
     const teachers = course.teacher.split(/,|、/);
     for (const teacher of teachers) {
-      if (!teacherNames.includes(teacher)) {
-        teacherNames.push(teacher);
+      // * there is only chinese teacherName at the moment
+      const newTeacher: Name = { "zh-tw": teacher };
+      if (!hasName(teacherNames, newTeacher)) {
+        teacherNames.push(newTeacher);
       }
     }
   }
 
-  await client.set("courseNames", JSON.stringify(courseNames));
-  await client.set("teacherNames", JSON.stringify(teacherNames));
+  await client.set(courseNameKey, JSON.stringify(courseNames));
+  await client.set(teacherNameKey, JSON.stringify(teacherNames));
 };
 
 export const cacheDepartments = async (
@@ -143,21 +154,25 @@ export const cacheDepartments = async (
 };
 
 export const getCachedCourseNames = async (
+  acysem: string,
   language: string
 ): Promise<string[]> => {
-  let courseNames: { [key: string]: string[] } = {
-    "zh-tw": [],
-    "en-us": [],
-  };
-  const rawCourseNames = await client.get("courseNames");
+  let courseNames: Name[] = [];
+  const rawCourseNames = await client.get(dataKey(acysem, "courseName"));
   if (rawCourseNames !== null) {
     courseNames = JSON.parse(rawCourseNames);
   }
-  return courseNames[language];
+  return courseNames.map((name) => name[language]);
 };
 
-export const getCachedTeacherNames = async (): Promise<string[]> => {
-  const rawTeacherNames = (await client.get("teacherNames")) ?? "[]";
-  const teacherNames: string[] = JSON.parse(rawTeacherNames);
-  return teacherNames;
+export const getCachedTeacherNames = async (
+  acysem: string,
+  language: string
+): Promise<string[]> => {
+  let teacherNames: Name[] = [];
+  const rawTeacherNames = await client.get(dataKey(acysem, "teacherName"));
+  if (rawTeacherNames !== null) {
+    teacherNames = JSON.parse(rawTeacherNames);
+  }
+  return teacherNames.map((name) => name[language]);
 };

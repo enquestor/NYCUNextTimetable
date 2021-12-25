@@ -71,7 +71,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
   const courses = parseCourses(data!);
 
   // cache course details
-  cacheCourses(courses);
+  cacheCourses(params.value.acysem, courses);
 
   res.status(200).json({ courses, time });
 }

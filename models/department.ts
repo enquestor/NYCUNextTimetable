@@ -1,15 +1,13 @@
+import { Name } from "./name";
+
 export type Department = {
-  name: {
-    [key: string]: string;
-  };
+  name: Name;
   id: string;
   typeId: string;
   categoryId: string;
   collegeId: string;
   grades: Array<{
-    name: {
-      [key: string]: string;
-    };
+    name: Name;
     value: string;
   }>;
 };

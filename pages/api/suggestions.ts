@@ -1,15 +1,18 @@
 import Fuse from "fuse.js";
 import Joi from "joi";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { Name } from "../../models/name";
 import { getCachedCourseNames, getCachedTeacherNames } from "../../utils/redis";
 
 export type SuggestionsApiParameters = {
+  acysem: string;
   category: string;
   query: string;
   language: string;
 };
 
 const schema = Joi.object<SuggestionsApiParameters>({
+  acysem: Joi.string().required(),
   category: Joi.string().required().valid("courseName", "teacherName"),
   query: Joi.string().required(),
   language: Joi.string().default("zh-tw"),
@@ -37,10 +40,16 @@ export default async function handler(
   let cached: string[] = [];
   switch (params.value.category) {
     case "courseName":
-      cached = await getCachedCourseNames(params.value.language);
+      cached = await getCachedCourseNames(
+        params.value.acysem,
+        params.value.language
+      );
       break;
     case "teacherName":
-      cached = await getCachedTeacherNames();
+      cached = await getCachedTeacherNames(
+        params.value.acysem,
+        params.value.language
+      );
       break;
   }
 

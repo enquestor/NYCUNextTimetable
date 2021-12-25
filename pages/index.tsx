@@ -125,6 +125,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
         </Typography>
         <Box height="32px" />
         <SearchBar
+          acysem={acysem}
           category={category}
           query={query}
           language={language}
@@ -183,6 +184,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
 };
 
 type SearchBarProps = {
+  acysem: string;
   category: SearchCategory;
   query: string;
   language: string;
@@ -193,6 +195,7 @@ type SearchBarProps = {
 };
 
 const SearchBar = ({
+  acysem,
   category,
   query,
   language,
@@ -212,8 +215,9 @@ const SearchBar = ({
     if (category === "courseName" || category === "teacherName") {
       axios
         .post("/api/suggestions", {
-          category: category,
-          query: query,
+          acysem,
+          category,
+          query,
         })
         .then((response) => {
           setSuggestions(response.data);

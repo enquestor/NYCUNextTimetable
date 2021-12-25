@@ -1,3 +1,5 @@
+import { Name } from "../models/name";
+
 export const separateAcysem = (acysem: string) => {
   const acy = acysem.slice(0, acysem.length - 1);
   const sem = acysem.slice(acysem.length - 1, acysem.length);
@@ -50,4 +52,23 @@ export const toCategoryText = (category: string, language: string): string => {
     return "永久課號";
   }
   return "";
+};
+
+export const hasName = (names: Name[], target: Name): boolean => {
+  const langs = Object.keys(target);
+  for (const name of names) {
+    for (const lang of langs) {
+      if (name[lang] === target[lang]) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+export const dataKey = (acysem: string, data: string): string => {
+  return JSON.stringify({
+    acysem,
+    data,
+  });
 };
