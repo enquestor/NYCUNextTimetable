@@ -24,7 +24,6 @@ import { separateAcysem, toCategoryText } from "../utils/helpers";
 import { Refresh } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import LazyLoad from "react-lazyload";
-import { getCachedCourses } from "../utils/redis";
 import Joi from "joi";
 
 type SearchPageParameters = {
@@ -58,6 +57,9 @@ const schema = Joi.object<SearchPageParameters>({
 export const getServerSideProps: GetServerSideProps = async ({
   query,
 }): Promise<GetServerSidePropsResult<SearchProps>> => {
+  // use conditional import to avoid nextjs attempting to connect to redis at build time
+  const { getCachedCourses } = await import("../utils/redis");
+
   const params = schema.validate(query);
   if (
     typeof params.value === "undefined" ||

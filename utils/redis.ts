@@ -3,7 +3,7 @@ import { Course } from "../models/course";
 import { Department } from "../models/department";
 import { Name } from "../models/name";
 import { CoursesApiParameters, CoursesApiResponse } from "../pages/api/courses";
-import { dataKey, hasName, now } from "./helpers";
+import { dataKey, hasName } from "./helpers";
 
 const client = createClient({
   url: `redis://${process.env.REDIS_HOST}`,
