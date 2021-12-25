@@ -1,3 +1,4 @@
+import { Name } from "./name";
 import { NycuCoursesApiReponse } from "./nycu_courses_api_response";
 
 export type Course = {
@@ -7,9 +8,7 @@ export type Course = {
   permanentId: string;
   limit: number;
   link: string;
-  name: {
-    [key: string]: string;
-  };
+  name: Name;
   credits: number;
   hours: number;
   memo: string;
@@ -18,9 +17,7 @@ export type Course = {
   time: string;
   departmentId: string;
   registered: number;
-  departmentName: {
-    [key: string]: string;
-  };
+  departmentName: Name;
   type: string;
   // typeInformation: {
   //     categoryoyName: {
