@@ -1,7 +1,6 @@
 import Fuse from "fuse.js";
 import Joi from "joi";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Name } from "../../models/name";
 import { getCachedCourseNames, getCachedTeacherNames } from "../../utils/redis";
 
 export type SuggestionsApiParameters = {
@@ -22,12 +21,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // validate request
   if (req.method !== "POST") {
     res.status(405).end();
     return;
   }
 
+  // validate request
   let params = schema.validate(req.body);
   if (
     typeof params.value === "undefined" ||

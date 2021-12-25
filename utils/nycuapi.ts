@@ -1,36 +1,173 @@
 import axios from "axios";
 import { encode } from "querystring";
+import { Course } from "../models/course";
 import { Department } from "../models/department";
+import { now, parseCourses, separateAcysem, slowPost } from "./helpers";
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export type GetCoursesParameters = {
+  acysem: string;
+  option: string;
+  query: string;
+};
 
-async function slowPost(
-  endpoint: string,
-  params: string,
-  config: Object
-): Promise<any> {
+export type GetCoursesResponse = {
+  courses: Course[];
+  time: string;
+};
+
+export type GetCoursesResponseData = {
+  [key: string]: {
+    1: {
+      [key: string]: {
+        acy: string;
+        sem: string;
+        cos_id: string;
+        cos_code: string;
+        num_limit: string;
+        dep_limit: string;
+        URL: string | null;
+        cos_cname: string;
+        cos_credit: string;
+        cos_hours: string;
+        TURL: string;
+        teacher: string;
+        cos_time: string;
+        memo: string;
+        cos_ename: string;
+        brief: string;
+        degree: string;
+        dep_id: string;
+        dep_primary: string;
+        dep_cname: string;
+        dep_ename: string;
+        cos_type: string;
+        cos_type_e: string;
+        crsoutline_type: string | null;
+        reg_num: string;
+        depType: string;
+      };
+    } | null;
+    2: {
+      [key: string]: {
+        acy: string;
+        sem: string;
+        cos_id: string;
+        cos_code: string;
+        num_limit: string;
+        dep_limit: string;
+        URL: string | null;
+        cos_cname: string;
+        cos_credit: string;
+        cos_hours: string;
+        TURL: string;
+        teacher: string;
+        cos_time: string;
+        memo: string;
+        cos_ename: string;
+        brief: string;
+        degree: string;
+        dep_id: string;
+        dep_primary: string;
+        dep_cname: string;
+        dep_ename: string;
+        cos_type: string;
+        cos_type_e: string;
+        crsoutline_type: string | null;
+        reg_num: string;
+        depType: string;
+      };
+    } | null;
+    dep_id: string;
+    dep_cname: string;
+    dep_ename: string;
+    costype: {
+      [key: string]: {
+        [key: string]: {
+          course_category_cname: string;
+          course_category_ename: string;
+          course_category_type: string;
+          GECIName: string;
+          GECIEngName: string;
+        };
+      };
+    };
+    brief: {
+      [key: string]: {
+        [key: string]: {
+          brief_code: string;
+          brief: string;
+        };
+      };
+    };
+    language: {
+      [key: string]: {
+        授課語言代碼: string;
+      };
+    };
+  };
+};
+
+export async function getCourses(
+  params: GetCoursesParameters
+): Promise<GetCoursesResponse | undefined> {
+  console.info("[NYCUAPI] getCourses");
+  const { acy, sem } = separateAcysem(params.acysem);
   try {
-    console.log("request");
     const response = await axios.post(
-      process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT + endpoint,
-      params,
-      config
+      process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT + "get_cos_list",
+      encode({
+        m_acy: acy,
+        m_sem: sem,
+        m_acyend: acy,
+        m_semend: sem,
+        m_dep_uid: params.option === "dep" ? params.query : "**",
+        m_group: "**",
+        m_grade: "**",
+        m_class: "**",
+        m_option: params.option === "dep" ? "**" : params.option,
+        m_crsname: params.option === "crsname" ? params.query : "**",
+        m_teaname: params.option === "teaname" ? params.query : "**",
+        m_cos_id: params.option === "cos_id" ? params.query : "**",
+        m_cos_code: params.option === "cos_code" ? params.query : "**",
+        m_crstime: "**",
+        m_crsoutline: "**",
+        m_costype: "**",
+        m_selcampus: "**",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        },
+      }
     );
-    await sleep(parseInt(process.env.NYCUAPI_THROTTLE!));
-    console.log(response.data);
-    return response.data;
-  } catch (error) {}
+    return {
+      courses: parseCourses(response.data),
+      time: now(),
+    };
+  } catch (error) {
+    console.error(error);
+    return undefined;
+  }
 }
 
-export async function getDepartments(acysem: string): Promise<Department[]> {
+export type GetDepartmentsParameters = {
+  acysem: string;
+};
+
+export type GetDepartmentsResponse = {
+  departments: Department[];
+};
+
+export async function getDepartments(
+  params: GetDepartmentsParameters
+): Promise<GetDepartmentsResponse | undefined> {
+  console.info("[NYCUAPI] getDepartments");
   const types = await slowPost(
     "get_type",
     encode({
       flang: "zh-tw",
-      acysem: acysem,
-      acysemend: acysem,
+      acysem: params.acysem,
+      acysemend: params.acysem,
     }),
     {
       headers: {
@@ -40,9 +177,9 @@ export async function getDepartments(acysem: string): Promise<Department[]> {
   );
   const departments: Array<Department> = [];
   for (const type of types) {
-    departments.push(...(await getCategory(type.uid, acysem)));
+    departments.push(...(await getCategory(type.uid, params.acysem)));
   }
-  return departments;
+  return { departments };
 }
 
 async function getCategory(

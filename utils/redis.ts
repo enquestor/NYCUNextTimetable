@@ -3,11 +3,10 @@ import { createClient } from "redis";
 import { Course } from "../models/course";
 import { Department } from "../models/department";
 import { Name } from "../models/name";
-import { dataKey, hasName } from "./helpers";
+import { CoursesApiParameters } from "../pages/api/courses";
+import { dataKey, hasName, now } from "./helpers";
 
-const now = (): string => new Date().toISOString();
-
-const client = createClient({
+export const client = createClient({
   url: `redis://${process.env.REDIS_HOST}`,
 });
 client.on("error", (err) => console.log("Redis Client Error", err));
@@ -17,43 +16,6 @@ type CachedResponse = {
   data: any;
   time: string;
 };
-
-export async function cachedGet(
-  url: string,
-  config?: AxiosRequestConfig<any>,
-  force?: boolean
-): Promise<CachedResponse> {
-  const key = JSON.stringify({
-    url,
-    config,
-  });
-
-  if (force !== true) {
-    const cached = await client.get(key);
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  }
-
-  try {
-    const response = await axios.get(url, config);
-    const requestTime = now();
-    await client.set(
-      key,
-      JSON.stringify({ data: response.data, time: requestTime })
-    );
-    return {
-      data: response.data,
-      time: requestTime,
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      data: null,
-      time: now(),
-    };
-  }
-}
 
 export async function cachedPost(
   url: string,
@@ -97,12 +59,36 @@ export async function cachedPost(
   }
 }
 
-export const cacheCourses = async (acysem: string, courses: Course[]) => {
-  // let courseNames: { [key: string]: string[] } = {
-  //   "zh-tw": [],
-  //   "en-us": [],
-  // };
+export const cacheCourses = async (
+  params: CoursesApiParameters,
+  courses: Course[],
+  time: string
+) => {
+  const { force, ...required } = params;
+  const key = JSON.stringify({
+    data: "courses",
+    ...required,
+  });
+  await client.set(key, JSON.stringify({ courses, time }));
+};
 
+export const getCachedCourses = async (
+  params: CoursesApiParameters
+): Promise<{ courses: Course[]; time: string } | undefined> => {
+  const { force, ...required } = params;
+  const key = JSON.stringify({
+    data: "courses",
+    ...required,
+  });
+  const cached = await client.get(key);
+  if (cached) {
+    return JSON.parse(cached);
+  } else {
+    return undefined;
+  }
+};
+
+export const cacheCourseNames = async (acysem: string, courses: Course[]) => {
   // get course names
   const courseNameKey = dataKey(acysem, "courseName");
   let courseNames: Name[] = [];

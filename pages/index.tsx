@@ -14,13 +14,11 @@ import {
 } from "@mui/material";
 import Router from "next/router";
 import { SearchCategory } from "../models/search_category";
-import Cookies from "js-cookie";
 import { toAcysemText, toCategoryText } from "../utils/helpers";
-import { getDepartments } from "../utils/garbage_department_api";
-import { cacheDepartments } from "../utils/redis";
 import { Department } from "../models/department";
 import Fuse from "fuse.js";
 import { DEV_DEPARTMENTS } from "../utils/constants";
+import { getDepartments } from "../utils/nycuapi";
 
 export const getStaticProps: GetStaticProps = async () => {
   let props: HomeProps = {
@@ -44,7 +42,12 @@ export const getStaticProps: GetStaticProps = async () => {
   // get departments
   console.log("get departments");
   if (process.env.NODE_ENV === "production") {
-    props.departments = await getDepartments(props.acysems[0]);
+    const result = await getDepartments({ acysem: props.acysems[0] });
+    if (typeof result === "undefined") {
+      props.departments = [];
+    } else {
+      props.departments = result.departments;
+    }
   } else {
     props.departments = DEV_DEPARTMENTS;
   }
