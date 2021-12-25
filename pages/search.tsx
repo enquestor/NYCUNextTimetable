@@ -1,7 +1,10 @@
 import axios from "axios";
-import type { NextPage } from "next";
+import type {
+  GetServerSideProps,
+  GetServerSidePropsResult,
+  NextPage,
+} from "next";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { Course } from "../models/course";
 import { useState, useEffect } from "react";
 import {
@@ -17,90 +20,131 @@ import {
   Typography,
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
-import Cookies from "js-cookie";
-import { separateAcysem, toAcysemText, toCategoryText } from "../utils/helpers";
+import { separateAcysem, toCategoryText } from "../utils/helpers";
 import { Refresh } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import LazyLoad from "react-lazyload";
+import { getCachedCourses } from "../utils/redis";
+import Joi from "joi";
 
-export const getServerSideProps = async () => {
-  return {
-    props: {},
-  };
+type SearchPageParameters = {
+  acysem: string;
+  category: string;
+  query: string;
+  language: string;
+  departmentId?: string | undefined;
 };
 
-const Search: NextPage = () => {
-  const router = useRouter();
-  const parmas = router.query;
-  const acysem: string = parmas.acysem as string;
-  const category: string = parmas.category as string;
-  const query: string = parmas.query as string;
-  const language = "zh-tw"; // TODO: en-us language support
-  const departmentId: string | undefined = parmas.departmentId as
-    | string
-    | undefined;
+const schema = Joi.object<SearchPageParameters>({
+  acysem: Joi.string().required(),
+  category: Joi.string()
+    .required()
+    .valid(
+      "courseName",
+      "teacherName",
+      "departmentName",
+      "courseId",
+      "coursePermanentId"
+    ),
+  query: Joi.string().required(),
+  language: Joi.string().default("zh-tw"),
+  departmentId: Joi.when("category", {
+    is: "departmentName",
+    then: Joi.string().required(),
+    otherwise: Joi.string(),
+  }),
+});
 
-  const [loading, setLoading] = useState(true);
-  const [veryLong, setVeryLong] = useState(false);
+export const getServerSideProps: GetServerSideProps = async ({
+  query,
+}): Promise<GetServerSidePropsResult<SearchProps>> => {
+  const params = schema.validate(query);
+  if (
+    typeof params.value === "undefined" ||
+    typeof params.error !== "undefined"
+  ) {
+    // incorrect get params
+    return { notFound: true };
+  }
+
+  // get cached course if exist
+  const result = await getCachedCourses(params.value);
+  if (typeof result === "undefined") {
+    // cache miss, send validated params
+    return {
+      props: {
+        courses: [],
+        time: "",
+        params: params.value,
+      },
+    };
+  } else {
+    // cache hit, send cached result
+    return {
+      props: {
+        params: params.value,
+        ...result,
+      },
+    };
+  }
+};
+
+type SearchProps = {
+  courses: Course[];
+  time: string;
+  params: SearchPageParameters;
+};
+
+const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
+  const cached = time !== "";
+  const [loading, setLoading] = useState(!cached);
   const [coursesApiResponse, setCoursesApiResponse] =
     useState<CoursesApiResponse>({
-      courses: [],
-      time: "",
+      courses: cached ? courses : [],
+      time: cached ? time : "",
     });
 
-  useEffect(() => {
-    axios
-      .post("/api/courses", {
-        acysem,
-        category,
-        query: category === "departmentName" ? departmentId : query,
-      })
-      .then((response) => {
-        setLoading(false);
-        setVeryLong(false);
-        setCoursesApiResponse(response.data as CoursesApiResponse);
-      })
-      .catch((error) => {
-        setLoading(false);
-        setVeryLong(false);
-      });
-    setTimeout(function () {
-      setVeryLong(true);
-    }, 2000);
-  }, []);
-
-  const handleForceRefresh = () => {
+  const getCourses = async () => {
     setLoading(true);
-    axios
-      .post("/api/courses", {
-        acysem: acysem,
-        category: category,
-        query: query,
-        force: true,
-      })
-      .then((response) => {
-        setLoading(false);
-        setCoursesApiResponse(response.data as CoursesApiResponse);
-      })
-      .catch((error) => {
-        setLoading(false);
+    try {
+      const result = await axios.post("/api/courses", {
+        acysem: params.acysem,
+        category: params.category,
+        query:
+          params.category === "departmentName"
+            ? params.departmentId
+            : params.query,
       });
+      setCoursesApiResponse(result.data);
+    } catch (error) {
+      setCoursesApiResponse({
+        courses: [],
+        time: "ERROR",
+      });
+    }
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (!cached) {
+      getCourses();
+    }
+  }, []);
 
   return (
     <>
       <Head>
-        <title>{query} - NYCU Timetable</title>
+        <title>{params.query} - NYCU Timetable</title>
       </Head>
       {loading ? (
-        <Loading veryLong={veryLong} />
+        <Loading />
       ) : (
         <Container maxWidth="md">
           <InfoLine
-            acysem={acysem}
-            category={category}
-            query={query}
-            language={language}
+            acysem={params.acysem}
+            category={params.category}
+            query={params.query}
+            language={params.language}
             time={coursesApiResponse.time}
           />
           {coursesApiResponse.courses.map((course) => (
@@ -108,8 +152,8 @@ const Search: NextPage = () => {
               <CourseCard
                 key={course.id}
                 course={course}
-                acysem={acysem}
-                language={language}
+                acysem={params.acysem}
+                language={params.language}
               />
             </LazyLoad>
           ))}
@@ -119,7 +163,7 @@ const Search: NextPage = () => {
         color="primary"
         aria-label="add"
         style={{ position: "fixed", right: "12px", bottom: "12px" }}
-        onClick={() => handleForceRefresh()}
+        onClick={() => getCourses()}
       >
         <Refresh />
       </Fab>
@@ -199,11 +243,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
   );
 };
 
-type LoadingProps = {
-  veryLong?: boolean;
-};
-
-const Loading = ({ veryLong }: LoadingProps) => {
+const Loading = () => {
   return (
     <Stack
       flex={1}
@@ -212,9 +252,9 @@ const Loading = ({ veryLong }: LoadingProps) => {
       alignItems="center"
     >
       <CircularProgress />
-      <Box height="30px" sx={{ opacity: veryLong ? 1 : 0 }} pt="24px">
+      <Box height="30px" pt="24px">
         <Typography variant="subtitle1" textAlign="center">
-          本次查詢未被快取，正在從 NYCU 課表抓資料...
+          正在從緩慢的 NYCU 課表抓資料 ...
         </Typography>
       </Box>
     </Stack>

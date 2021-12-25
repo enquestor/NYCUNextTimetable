@@ -1,14 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Course } from "../../models/course";
-import {
-  cacheCourseNames,
-  cacheCourses,
-  cachedPost,
-  getCachedCourses,
-} from "../../utils/redis";
+import { cacheCourseNames, cacheCourses } from "../../utils/redis";
 import Joi from "joi";
 import { getCourses } from "../../utils/nycuapi";
-import { parseCourses } from "../../utils/helpers";
 import Fuse from "fuse.js";
 
 export type CoursesApiParameters = {
@@ -16,7 +10,6 @@ export type CoursesApiParameters = {
   category: string;
   query: string;
   language: string;
-  force: boolean;
 };
 
 export type CoursesApiResponse = {
@@ -37,7 +30,6 @@ const schema = Joi.object<CoursesApiParameters>({
     ),
   query: Joi.string().required(),
   language: Joi.string().default("zh-tw"),
-  force: Joi.boolean().default(false),
 });
 
 export default async function (req: NextApiRequest, res: NextApiResponse) {
@@ -56,36 +48,29 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
     return;
   }
 
-  const cachedCourses = await getCachedCourses(params.value);
-  if (params.value.force || typeof cachedCourses === "undefined") {
-    // get courses from NYCUAPI if force or cache miss
-    const result = await getCourses({
-      acysem: params.value.acysem,
-      option: toNycuOption(params.value.category),
-      query: params.value.query,
-    });
-    if (typeof result === "undefined") {
-      res.status(500).end();
-      return;
-    }
-
-    const { courses, time } = result;
-    let sortedCourses = courses;
-    if (params.value.category !== "departmentName") {
-      const fuse = new Fuse(courses, {
-        keys: [["name", params.value.language]],
-      });
-      sortedCourses = fuse.search(params.value.query).map((e) => e.item);
-    }
-
-    cacheCourses(params.value, sortedCourses, time);
-    cacheCourseNames(params.value.acysem, sortedCourses);
-
-    res.status(200).json({ courses, time });
-  } else {
-    // cache hit
-    res.status(200).json(cachedCourses);
+  const result = await getCourses({
+    acysem: params.value.acysem,
+    option: toNycuOption(params.value.category),
+    query: params.value.query,
+  });
+  if (typeof result === "undefined") {
+    res.status(500).end();
+    return;
   }
+
+  const { courses, time } = result;
+  let sortedCourses = courses;
+  if (params.value.category !== "departmentName") {
+    const fuse = new Fuse(courses, {
+      keys: [["name", params.value.language]],
+    });
+    sortedCourses = fuse.search(params.value.query).map((e) => e.item);
+  }
+
+  cacheCourses(params.value, sortedCourses, time);
+  cacheCourseNames(params.value.acysem, sortedCourses);
+
+  res.status(200).json({ courses, time });
 }
 
 function toNycuOption(category: string): string {

@@ -1,84 +1,34 @@
-import axios, { AxiosRequestConfig } from "axios";
 import { createClient } from "redis";
 import { Course } from "../models/course";
 import { Department } from "../models/department";
 import { Name } from "../models/name";
-import { CoursesApiParameters } from "../pages/api/courses";
+import { CoursesApiParameters, CoursesApiResponse } from "../pages/api/courses";
 import { dataKey, hasName, now } from "./helpers";
 
-export const client = createClient({
+const client = createClient({
   url: `redis://${process.env.REDIS_HOST}`,
 });
 client.on("error", (err) => console.log("Redis Client Error", err));
 client.connect();
-
-type CachedResponse = {
-  data: any;
-  time: string;
-};
-
-export async function cachedPost(
-  url: string,
-  data?: any,
-  config?: AxiosRequestConfig<any>,
-  force?: boolean
-): Promise<CachedResponse> {
-  const key = JSON.stringify({
-    url,
-    data,
-    config,
-  });
-
-  if (force !== true) {
-    const cached = await client.get(key);
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  }
-
-  try {
-    const response = await axios.post(url, data, config);
-    const requestTime = now();
-    await client.set(
-      key,
-      JSON.stringify({
-        data: response.data,
-        time: requestTime,
-      })
-    );
-    return {
-      data: response.data,
-      time: requestTime,
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      data: null,
-      time: now(),
-    };
-  }
-}
 
 export const cacheCourses = async (
   params: CoursesApiParameters,
   courses: Course[],
   time: string
 ) => {
-  const { force, ...required } = params;
   const key = JSON.stringify({
     data: "courses",
-    ...required,
+    ...params,
   });
   await client.set(key, JSON.stringify({ courses, time }));
 };
 
 export const getCachedCourses = async (
   params: CoursesApiParameters
-): Promise<{ courses: Course[]; time: string } | undefined> => {
-  const { force, ...required } = params;
+): Promise<CoursesApiResponse | undefined> => {
   const key = JSON.stringify({
     data: "courses",
-    ...required,
+    ...params,
   });
   const cached = await client.get(key);
   if (cached) {
