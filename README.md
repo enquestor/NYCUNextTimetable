@@ -1,3 +1,5 @@
+# NYCUNextTimetable
+
 This is a course search/browser that aims to create a better experience compared to the original [NYCU timetable](https://timetable.nycu.edu.tw/).
 
 [Demo](https://timetable.yagami.dev)
@@ -25,7 +27,7 @@ npm i
 ```
 
 3. Start a local redis server
-You can use docker image from [official redis docker hub](https://hub.docker.com/_/redis) like this:
+You can use docker image from [Official Redis DockerHub](https://hub.docker.com/_/redis) like this:
 ```
 docker run --name some-redis -d redis
 ```
@@ -50,3 +52,6 @@ npm run build
 ```
 docker build -t [image-name] .
 ```
+
+## Todo
+⬜ Tests
