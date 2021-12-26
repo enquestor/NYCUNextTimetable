@@ -143,11 +143,11 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
       ) : (
         <Container maxWidth="md">
           <InfoLine
-            acysem={params.acysem}
             category={params.category}
             query={params.query}
             language={params.language}
             time={coursesApiResponse.time}
+            count={coursesApiResponse.courses.length}
           />
           {coursesApiResponse.courses.map((course) => (
             <LazyLoad key={course.id}>
@@ -174,19 +174,19 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
 };
 
 type InfoLineProps = {
-  acysem: string;
   category: string;
   query: string;
   language: string;
   time: string;
+  count: number;
 };
 
 const InfoLine = ({
-  acysem,
   category,
   query,
   language,
   time,
+  count,
 }: InfoLineProps) => {
   const formattedTime = DateTime.fromISO(time).toLocaleString(
     DateTime.DATETIME_MED
@@ -198,11 +198,19 @@ const InfoLine = ({
       alignItems="center"
       p="24px"
     >
-      <Typography variant="h6">{`在 ${toCategoryText(
+      <Typography variant="h6">{`${toCategoryText(
         category,
         language
-      )} 查詢了 ${query}`}</Typography>
-      <Typography variant="body2">快取時間：{formattedTime}</Typography>
+      )} - ${query}`}</Typography>
+      <Stack pt={1} direction="column">
+        <Stack direction="row">
+          <Typography variant="caption">課程總數：</Typography>
+          <Typography variant="caption" ml={2}>
+            查詢到 {count} 堂課程
+          </Typography>
+        </Stack>
+        <Typography variant="caption">快取時間：{formattedTime}</Typography>
+      </Stack>
     </Stack>
   );
 };
@@ -227,7 +235,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
           </Stack>
           <Box height="8px" />
           <Typography variant="body1" color="text.secondary">
-            {course.time} . {course.credits} credits
+            {course.time} · {course.credits} 學分
           </Typography>
           {course.memo === "" ? <></> : <Box height="24px" />}
           <Typography variant="body1">{course.memo}</Typography>
