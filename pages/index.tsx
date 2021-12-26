@@ -98,6 +98,9 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
         },
       });
     } else {
+      if (query.length === 0) {
+        return;
+      }
       Router.push({
         pathname: "/search",
         query: {

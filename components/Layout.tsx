@@ -13,7 +13,7 @@ import { createTheme, Theme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import Cookies from "js-cookie";
 import styles from "../styles/Layout.module.css";
-import { useRouter } from "next/router";
+import Router from "next/router";
 
 declare module "@mui/material/styles" {
   interface PaletteOptions {
@@ -26,7 +26,7 @@ declare module "@mui/material/styles" {
 }
 
 const Layout = ({ children }: any) => {
-  const router = useRouter();
+  // const router = useRouter();
 
   const browserPreference = useMediaQuery("(prefers-color-scheme: dark)");
   const [theme, setTheme] = useState<"light" | "dark">(
@@ -43,14 +43,16 @@ const Layout = ({ children }: any) => {
         <CssBaseline />
         <AppBar position="sticky">
           <Toolbar>
-            <div className={styles.appname} onClick={() => router.push("/")}>
+            <div className={styles.appname} onClick={() => Router.push("/")}>
               <TaskAltIcon />
               <Typography variant="h6" noWrap sx={{ pl: 3 }}>
                 NYCU Timetable
               </Typography>
             </div>
             <Box sx={{ flexGrow: 1 }} />
-            <Button color="inherit">關於</Button>
+            <Button color="inherit" onClick={() => Router.push("/about")}>
+              About
+            </Button>
           </Toolbar>
         </AppBar>
         {children}
