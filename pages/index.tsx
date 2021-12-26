@@ -172,7 +172,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
             onChange={(event) =>
               setCategory(event.target.value as SearchCategory)
             }
-            sx={{ height: "38px", width: "160px" }}
+            sx={{ height: "38px", width: "120px" }}
           >
             {searchCategories.map((searchCategory) => (
               <MenuItem key={searchCategory} value={searchCategory}>

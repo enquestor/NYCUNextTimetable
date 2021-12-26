@@ -16,6 +16,8 @@ import {
   CircularProgress,
   Container,
   Fab,
+  Link,
+  Modal,
   Stack,
   Typography,
 } from "@mui/material";
@@ -211,13 +213,13 @@ const InfoLine = ({
         language
       )} - ${query}`}</Typography>
       <Stack pt={1} direction="column">
+        <Typography variant="caption">快取時間：{formattedTime}</Typography>
         <Stack direction="row">
           <Typography variant="caption">課程總數：</Typography>
           <Typography variant="caption" ml={2}>
             查詢到 {count} 堂課程
           </Typography>
         </Stack>
-        <Typography variant="caption">快取時間：{formattedTime}</Typography>
       </Stack>
     </Stack>
   );
@@ -231,33 +233,151 @@ type CourseCardProps = {
 
 const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
   const { acy, sem } = separateAcysem(acysem);
+  const [open, setOpen] = useState(false);
   return (
-    <Card sx={{ mb: "24px" }}>
-      <Box sx={{ p: "12px" }}>
-        <CardContent>
-          <Stack direction="row" alignItems="end">
-            <Typography variant="h4">{course.name[language]}</Typography>
-            <Box width="12px" />
-            <Typography variant="h6">{course.teacher}</Typography>
-            <Box sx={{ flexGrow: 1 }} />
-          </Stack>
-          <Box height="8px" />
-          <Typography variant="body1" color="text.secondary">
-            {course.time} · {course.credits} 學分
+    <>
+      <Card sx={{ mb: "24px" }}>
+        <Box sx={{ p: "12px" }}>
+          <CardContent>
+            <Stack direction="row" alignItems="center">
+              {typeof course.link === "undefined" ? (
+                <Typography
+                  variant="h5"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                >
+                  {course.name[language]}
+                </Typography>
+              ) : (
+                <Link
+                  variant="h5"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                  color="inherit"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  href={course.link}
+                  sx={{ cursor: "pointer" }}
+                >
+                  {course.name[language]}
+                </Link>
+              )}
+              <Box width="12px" />
+              <Stack direction="column">
+                <Typography variant="body1" whiteSpace="nowrap" pt={1}>
+                  {course.credits} 學分
+                </Typography>
+              </Stack>
+              <Box flexGrow={1} minWidth="12px" />
+              <Box border="1px solid" borderRadius="12px">
+                <Typography variant="body2" whiteSpace="nowrap" p="4px">
+                  {course.type}
+                </Typography>
+              </Box>
+            </Stack>
+            <Box height="4px" />
+            <Stack direction="row">
+              <Typography variant="body2" color="text.secondary">
+                {course.time} ·
+              </Typography>
+              {typeof course.teacherLink === "undefined" ? (
+                <Typography variant="body2" color="text.secondary" pl="2px">
+                  {course.teacher}
+                </Typography>
+              ) : (
+                <Link
+                  variant="body2"
+                  color="text.secondary"
+                  pl="2px"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  href={course.teacherLink}
+                  sx={{ cursor: "pointer" }}
+                >
+                  {course.teacher}
+                </Link>
+              )}
+            </Stack>
+            {course.memo === "" ? <></> : <Box height="24px" />}
+            <Typography variant="body2">{course.memo}</Typography>
+          </CardContent>
+          <CardActions>
+            <Button sx={{ whiteSpace: "nowrap" }} onClick={() => setOpen(true)}>
+              詳細資料
+            </Button>
+            <Button
+              target="_blank"
+              rel="noreferrer noopener"
+              sx={{ whiteSpace: "nowrap" }}
+              href={`${process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
+            >
+              課程綱要
+            </Button>
+            <Box flexGrow={1} />
+            <Typography
+              variant="body2"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              overflow="hidden"
+              pr={1}
+              pl={1}
+              color="text.secondary"
+            >
+              {course.departmentName[language]}
+            </Typography>
+          </CardActions>
+        </Box>
+      </Card>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "80%",
+            maxWidth: "400px",
+            bgcolor: "background.paper",
+            borderRadius: "12px",
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography id="modal-title" variant="h6" component="h2">
+            詳細資料
           </Typography>
-          {course.memo === "" ? <></> : <Box height="24px" />}
-          <Typography variant="body1">{course.memo}</Typography>
-        </CardContent>
-        <CardActions>
-          <Button>詳細資料</Button>
-          <Button
-            href={`${process.env.NEXT_PUBLIC_NYCUAPI_ENDPOINT}crsoutline&Acy=${acy}&Sem=${sem}&CrsNo=${course.id}&lang=${language}`}
-          >
-            課程綱要
-          </Button>
-        </CardActions>
-      </Box>
-    </Card>
+          <Box id="modal-description" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              上課時數：{course.hours} 小時
+            </Typography>
+            {typeof course.typeInformation === "undefined" ? (
+              <></>
+            ) : (
+              <Typography variant="body2">
+                課程資訊：{course.typeInformation}
+              </Typography>
+            )}
+            <Typography variant="body2" pt={1}>
+              選修人數：{course.registered} 人（資料與當下情況可能不符）
+            </Typography>
+            <Typography variant="body2">人數上限：{course.limit} 人</Typography>
+            <Typography variant="body2" pt={1}>
+              當期課號：{course.id}
+            </Typography>
+            <Typography variant="body2">
+              永久課號：{course.permanentId}
+            </Typography>
+          </Box>
+        </Box>
+      </Modal>
+    </>
   );
 };
 

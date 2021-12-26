@@ -60,9 +60,14 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
 
   const { courses, time } = result;
   let sortedCourses = courses;
-  if (params.value.category !== "departmentName") {
+  if (params.value.category === "courseName") {
     const fuse = new Fuse(courses, {
       keys: [["name", params.value.language]],
+    });
+    sortedCourses = fuse.search(params.value.query).map((e) => e.item);
+  } else if (params.value.category === "teacherName") {
+    const fuse = new Fuse(courses, {
+      keys: ["teacher"],
     });
     sortedCourses = fuse.search(params.value.query).map((e) => e.item);
   }

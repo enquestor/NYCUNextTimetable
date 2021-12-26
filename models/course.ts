@@ -6,13 +6,13 @@ export type Course = {
   id: string;
   permanentId: string;
   limit: number;
-  link: string;
+  link: string | undefined;
   name: Name;
   credits: number;
   hours: number;
-  memo: string;
+  memo: string | undefined;
   teacher: string;
-  teacherLink: string;
+  teacherLink: string | undefined;
   time: string;
   departmentId: string;
   registered: number;
@@ -25,6 +25,6 @@ export type Course = {
   //     }
   //     eligible:     string
   // } | null
-  typeInformation: string;
+  typeInformation: string | undefined;
   language: string;
 };

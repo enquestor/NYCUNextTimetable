@@ -123,16 +123,16 @@ export function parseCourses(data: GetCoursesResponseData): Course[] {
           id: apiCourse.cos_id,
           permanentId: apiCourse.cos_code.trim(),
           limit: parseInt(apiCourse.num_limit),
-          link: apiCourse.URL ?? "",
+          link: apiCourse.URL ?? undefined,
           name: {
             "zh-tw": apiCourse.cos_cname,
             "en-us": apiCourse.cos_ename,
           },
           credits: parseFloat(apiCourse.cos_credit),
           hours: parseFloat(apiCourse.cos_hours),
-          memo: apiCourse.memo ?? "",
+          memo: apiCourse.memo ?? undefined,
           teacher: apiCourse.teacher,
-          teacherLink: apiCourse.TURL,
+          teacherLink: apiCourse.TURL === "" ? undefined : apiCourse.TURL,
           time: apiCourse.cos_time,
           departmentId: departmentId,
           registered: parseInt(apiCourse.reg_num),
@@ -141,7 +141,8 @@ export function parseCourses(data: GetCoursesResponseData): Course[] {
             "en-us": apiCourse.dep_ename,
           },
           type: apiCourse.cos_type,
-          typeInformation: briefs.join("、"),
+          typeInformation:
+            briefs.join().trim() === "" ? undefined : briefs.join("、"),
           language: data[departmentId].language[courseId].授課語言代碼,
         });
         courseIds.push(apiCourse.cos_id);
