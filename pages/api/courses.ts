@@ -70,7 +70,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse) {
   cacheCourses(params.value, sortedCourses, time);
   cacheCourseNames(params.value.acysem, sortedCourses);
 
-  res.status(200).json({ sortedCourses, time });
+  res.status(200).json({ courses: sortedCourses, time });
 }
 
 function toNycuOption(category: string): string {

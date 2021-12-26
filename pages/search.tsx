@@ -70,7 +70,15 @@ export const getServerSideProps: GetServerSideProps = async ({
   }
 
   // get cached course if exist
-  const result = await getCachedCourses(params.value);
+  const result = await getCachedCourses({
+    acysem: params.value.acysem,
+    category: params.value.category,
+    query:
+      params.value.category === "departmentName"
+        ? params.value.departmentId!
+        : params.value.query,
+    language: params.value.language,
+  });
   if (typeof result === "undefined") {
     // cache miss, send validated params
     return {
@@ -121,7 +129,7 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
     } catch (error) {
       setCoursesApiResponse({
         courses: [],
-        time: "ERROR",
+        time: "",
       });
     }
     setLoading(false);

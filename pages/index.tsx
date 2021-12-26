@@ -84,12 +84,16 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
   const handleSearch = () => {
     if (category === "departmentName") {
       const suggestions = getDepartmentSuggestions(query);
+      if (suggestions.length === 0) {
+        // only allow search for existing department names
+        return;
+      }
       Router.push({
         pathname: "/search",
         query: {
           acysem,
           category,
-          query,
+          query: suggestions[0].name[language],
           departmentId: suggestions[0].id,
         },
       });
