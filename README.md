@@ -61,6 +61,8 @@ docker build -t [image-name] .
 
 ⬜ Tests
 
+⬜ Dark Theme
+
 ⬜ CI/CD with GitHub Actions
 
 ⬜ Better documentation and README
