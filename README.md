@@ -44,15 +44,21 @@ npm run dev
 ```
 
 ### Production build
+
 ```
 npm run build
 ```
 
 ### Build docker image
+
 ```
 docker build -t [image-name] .
 ```
 
 ## Todo
+
 ⬜ Tests
+
 ⬜ CI/CD with GitHub Actions
+
+⬜ Better documentation and README
