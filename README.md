@@ -57,6 +57,8 @@ docker build -t [image-name] .
 
 ## Todo
 
+⬜ en-us language support
+
 ⬜ Tests
 
 ⬜ CI/CD with GitHub Actions
