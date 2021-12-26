@@ -55,3 +55,4 @@ docker build -t [image-name] .
 
 ## Todo
 ⬜ Tests
+⬜ CI/CD with GitHub Actions
