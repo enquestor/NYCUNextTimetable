@@ -26,8 +26,7 @@ declare module "@mui/material/styles" {
 }
 
 const Layout = ({ children }: any) => {
-  // const router = useRouter();
-
+  // TODO: dark theme support
   const browserPreference = useMediaQuery("(prefers-color-scheme: dark)");
   const [theme, setTheme] = useState<"light" | "dark">(
     preferredTheme(browserPreference)
@@ -46,7 +45,7 @@ const Layout = ({ children }: any) => {
             <div className={styles.appname} onClick={() => Router.push("/")}>
               <TaskAltIcon />
               <Typography variant="h6" noWrap sx={{ pl: 3 }}>
-                NYCU Timetable
+                Next Timetable
               </Typography>
             </div>
             <Box sx={{ flexGrow: 1 }} />

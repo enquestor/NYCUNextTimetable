@@ -122,7 +122,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
   return (
     <>
       <Head>
-        <title>NYCU Timetable</title>
+        <title>Next Timetable</title>
       </Head>
       <Stack
         flex={1}
@@ -131,7 +131,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
         alignItems="center"
       >
         <Typography variant="h2" textAlign="center">
-          NYCU Timetable
+          Next Timetable
         </Typography>
         <Box height="32px" />
         <SearchBar
@@ -272,10 +272,11 @@ const SearchBar = ({
           onKeyPress={(event) => {
             if (event.key === "Enter") {
               onSearch();
-            }
-            if (event.key === " ") {
+            } else if (event.key === "\\") {
               setOpen(false);
               onNextCategory();
+              event.preventDefault();
+            } else if (event.key === " ") {
               event.preventDefault();
             }
           }}

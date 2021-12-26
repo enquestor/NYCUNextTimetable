@@ -17,7 +17,7 @@ const About: NextPage = () => {
   return (
     <>
       <Head>
-        <title>About - NYCU Timetable</title>
+        <title>About - Next Timetable</title>
       </Head>
       <Container maxWidth="md">
         <Stack direction="column">
@@ -39,8 +39,8 @@ const AboutCard = () => {
             About
           </Typography>
           <Typography variant="body2" gutterBottom>
-            NYCU Next Timetable
-            是我的資工專題，目標是讓課表能用一點，不要每次到了學期初選課其間就整個動不了。
+            NYCU Next Timetable 是我的資工專題，目標是改善原來的 NYCU
+            Timetable，不要每次到了學期初選課其間就整個動不了。
           </Typography>
           <Typography variant="body2" gutterBottom>
             如果有幫助到你，歡迎到下方 GitHub 連結點個 Star :D

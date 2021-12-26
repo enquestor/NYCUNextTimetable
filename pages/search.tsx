@@ -147,7 +147,7 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
   return (
     <>
       <Head>
-        <title>{params.query} - NYCU Timetable</title>
+        <title>{params.query} - Next Timetable</title>
       </Head>
       {loading ? (
         <Loading />
