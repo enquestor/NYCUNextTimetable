@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Course } from "../models/course";
 import { Name } from "../models/name";
+import { COURSE_TYPE_COLORS } from "./constants";
 import { GetCoursesResponseData } from "./nycuapi";
 
 export const separateAcysem = (acysem: string) => {
@@ -130,7 +131,12 @@ export function parseCourses(data: GetCoursesResponseData): Course[] {
           },
           credits: parseFloat(apiCourse.cos_credit),
           hours: parseFloat(apiCourse.cos_hours),
-          memo: apiCourse.memo ?? undefined,
+          memo:
+            typeof apiCourse.memo === "undefined" ||
+            apiCourse.memo === null ||
+            apiCourse.memo.trim() === ""
+              ? undefined
+              : apiCourse.memo,
           teacher: apiCourse.teacher,
           teacherLink: apiCourse.TURL === "" ? undefined : apiCourse.TURL,
           time: apiCourse.cos_time,
@@ -152,3 +158,10 @@ export function parseCourses(data: GetCoursesResponseData): Course[] {
 
   return courses;
 }
+
+export const getCourseTypeColor = (type: string): string => {
+  if (typeof COURSE_TYPE_COLORS[type] === "undefined") {
+    return COURSE_TYPE_COLORS[type];
+  }
+  return COURSE_TYPE_COLORS["其他"];
+};

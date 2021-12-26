@@ -27,6 +27,7 @@ import { Refresh } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import LazyLoad from "react-lazyload";
 import Joi from "joi";
+import { COURSE_TYPE_COLORS } from "../utils/constants";
 
 type SearchPageParameters = {
   acysem: string;
@@ -236,7 +237,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Card sx={{ mb: "24px" }}>
+      <Card sx={{ mb: "18px" }}>
         <Box sx={{ p: "12px" }}>
           <CardContent>
             <Stack direction="row" alignItems="center">
@@ -271,19 +272,39 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
                 </Typography>
               </Stack>
               <Box flexGrow={1} minWidth="12px" />
-              <Box border="1px solid" borderRadius="12px">
-                <Typography variant="body2" whiteSpace="nowrap" p="4px">
+              <Box
+                border="1px solid"
+                borderRadius="12px"
+                borderColor={COURSE_TYPE_COLORS[course.type]}
+              >
+                <Typography
+                  variant="body2"
+                  whiteSpace="nowrap"
+                  p="4px"
+                  color={COURSE_TYPE_COLORS[course.type]}
+                >
                   {course.type}
                 </Typography>
               </Box>
             </Stack>
             <Box height="4px" />
             <Stack direction="row">
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                whiteSpace="nowrap"
+              >
                 {course.time} ·
               </Typography>
               {typeof course.teacherLink === "undefined" ? (
-                <Typography variant="body2" color="text.secondary" pl="2px">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  pl="2px"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  overflow="hidden"
+                >
                   {course.teacher}
                 </Typography>
               ) : (
@@ -291,6 +312,9 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
                   variant="body2"
                   color="text.secondary"
                   pl="2px"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                  overflow="hidden"
                   target="_blank"
                   rel="noreferrer noopener"
                   href={course.teacherLink}
@@ -300,7 +324,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
                 </Link>
               )}
             </Stack>
-            {course.memo === "" ? <></> : <Box height="24px" />}
+            {typeof course.memo === "undefined" ? <></> : <Box height="24px" />}
             <Typography variant="body2">{course.memo}</Typography>
           </CardContent>
           <CardActions>
@@ -365,7 +389,7 @@ const CourseCard = ({ course, acysem, language }: CourseCardProps) => {
               </Typography>
             )}
             <Typography variant="body2" pt={1}>
-              選修人數：{course.registered} 人（資料與當下情況可能不符）
+              選修人數：{course.registered} 人（僅供參考）
             </Typography>
             <Typography variant="body2">人數上限：{course.limit} 人</Typography>
             <Typography variant="body2" pt={1}>

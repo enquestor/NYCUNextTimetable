@@ -24,3 +24,14 @@ export const DEV_DEPARTMENTS: Department[] = [
     grades: [],
   },
 ];
+
+export const COURSE_TYPE_COLORS: {
+  [key: string]: string;
+} = {
+  必修: "#F44336",
+  選修: "#3f51b5",
+  通識: "#795548",
+  軍訓: "#388E3C",
+  教育: "#1DE9B6",
+  其他: "#424242",
+};
