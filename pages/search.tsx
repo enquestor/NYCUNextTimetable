@@ -19,6 +19,7 @@ import {
   Link,
   Modal,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import { CoursesApiResponse } from "./api/courses";
@@ -116,6 +117,7 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
       courses: cached ? courses : [],
       time: cached ? time : "",
     });
+  const [filter, setFilter] = useState("");
 
   const getCourses = async () => {
     setLoading(true);
@@ -144,6 +146,15 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
     }
   }, []);
 
+  let filteredCourses: Course[] = [];
+  if (filter === "") {
+    filteredCourses = coursesApiResponse.courses;
+  } else {
+    filteredCourses = coursesApiResponse.courses.filter((course) =>
+      JSON.stringify(course).includes(filter)
+    );
+  }
+
   return (
     <>
       <Head>
@@ -160,7 +171,14 @@ const Search: NextPage<SearchProps> = ({ courses, time, params }) => {
             time={coursesApiResponse.time}
             count={coursesApiResponse.courses.length}
           />
-          {coursesApiResponse.courses.map((course) => (
+          <TextField
+            sx={{ pb: "24px" }}
+            variant="outlined"
+            label="篩選"
+            fullWidth
+            onChange={(event) => setFilter(event.target.value)}
+          />
+          {filteredCourses.map((course) => (
             <LazyLoad key={course.id}>
               <CourseCard
                 key={course.id}

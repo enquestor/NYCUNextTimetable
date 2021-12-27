@@ -250,7 +250,6 @@ const SearchBar = ({
 
   return (
     <Autocomplete
-      id="asynchronous-demo"
       sx={{ width: "90%", maxWidth: "640px" }}
       freeSolo
       open={open}
@@ -265,6 +264,7 @@ const SearchBar = ({
         <TextField
           {...params}
           label="搜尋"
+          autoFocus
           onChange={(event) => onChange(event.target.value)}
           onKeyPress={(event) => {
             if (event.key === "Enter") {
