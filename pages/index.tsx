@@ -153,12 +153,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
           }}
         />
         <Box height="20px" />
-        <Stack
-          direction="row"
-          justifyContent="center"
-          alignItems="center"
-          spacing={2}
-        >
+        <Stack direction="row" justifyContent="center" alignItems="center">
           <Select
             value={acysem}
             onChange={(event) => setAcysem(event.target.value)}
@@ -170,6 +165,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
               </MenuItem>
             ))}
           </Select>
+          <Box width="20px" />
           <Select
             value={category}
             onChange={(event) =>
@@ -183,6 +179,7 @@ const Home: NextPage<HomeProps> = ({ acysems, departments }) => {
               </MenuItem>
             ))}
           </Select>
+          <Box width="20px" />
           <Button variant="outlined" onClick={() => handleSearch()}>
             搜尋
           </Button>
