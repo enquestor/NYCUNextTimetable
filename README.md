@@ -2,7 +2,7 @@
 
 This is a course search/browser that aims to create a better experience compared to the original [NYCU timetable](https://timetable.nycu.edu.tw/).
 
-[Demo](https://timetable.yagami.dev)
+[Demo](https://timetable.enquestor.dev)
 
 ## Install
 
